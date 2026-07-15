@@ -7,7 +7,7 @@ bootstrap_create_home: true
 
 bootstrap_lock_password: true
 
-bootstrap_public_key: diego.pub
+bootstrap_public_key: access_key.pub
 
 bootstrap_groups:
   Debian: sudo

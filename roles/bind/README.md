@@ -33,7 +33,7 @@ ansible/
     │   ├── defaults
     │   │   └── main.yml
     │   ├── files
-    │   │   └── diego.pub
+    │   │   └── access_key.pub
     │   ├── handlers
     │   │   └── main.yml
     │   ├── tasks
@@ -53,7 +53,7 @@ ansible/
 * публичный SSH-ключ пользователя расположен в:
 
 ```
-roles/bootstrap/files/diego.pub
+roles/bootstrap/files/access_key.pub
 ```
 
 ---
@@ -89,7 +89,7 @@ bootstrap_create_home: true
 
 bootstrap_lock_password: true
 
-bootstrap_public_key: diego.pub
+bootstrap_public_key: access_key.pub
 
 bootstrap_groups:
   Debian: sudo

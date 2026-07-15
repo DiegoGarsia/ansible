@@ -8,4 +8,4 @@
 .vscode/
 
 # Personal SSH key
-roles/bootstrap/files/diego.pub
+roles/bootstrap/files/access_key.pub
