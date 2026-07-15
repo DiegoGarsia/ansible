@@ -5,9 +5,9 @@
   changed_when: false
   listen: Reload nginx
 
-- name: Restart nginx
+- name: Reload nginx
   become: true
   ansible.builtin.service:
     name: nginx
-    state: restarted
+    state: reloaded
   listen: Reload nginx
