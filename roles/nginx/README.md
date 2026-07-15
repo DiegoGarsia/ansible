@@ -1,5 +1,3 @@
-# Nginx Reverse Proxy with Ansible
-
 ## Описание
 
 Проект автоматизирует развёртывание **Nginx Reverse Proxy** с помощью **Ansible**.
