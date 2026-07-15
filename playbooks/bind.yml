@@ -1,0 +1,7 @@
+---
+- name: Configure BIND9 DNS Server
+  hosts: dns_host
+  become: true
+
+  roles:
+    - bind

@@ -1,0 +1,13 @@
+---
+ansible_user: root
+
+dns_domain: diego.home
+
+dns_server: dns
+dns_server_ip: 192.168.0.103
+
+dns_network: 192.168.0
+dns_reverse_zone: 0.168.192.in-addr.arpa
+
+dns_forwarders:
+  - 192.168.0.1

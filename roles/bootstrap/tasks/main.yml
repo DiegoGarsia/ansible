@@ -1,0 +1,59 @@
+---
+- name: Update APT package cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Perform full system upgrade
+  ansible.builtin.apt:
+    upgrade: dist
+    autoremove: true
+    autoclean: true
+  when: ansible_os_family == "Debian"
+
+- name: Perform full system upgrade
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    update_only: true
+  when: ansible_os_family == "RedHat"
+
+- name: Install sudo on Debian-based systems
+  ansible.builtin.apt:
+    name: sudo
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install sudo on RedHat-based systems
+  ansible.builtin.dnf:
+    name: sudo
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Create bootstrap user
+  ansible.builtin.user:
+    name: "{{ bootstrap_user }}"
+    shell: "{{ bootstrap_shell }}"
+    create_home: "{{ bootstrap_create_home }}"
+
+- name: Install SSH public key
+  ansible.posix.authorized_key:
+    user: "{{ bootstrap_user }}"
+    state: present
+    key: "{{ lookup('file', bootstrap_public_key) }}"
+
+- name: Add user to administrator group
+  ansible.builtin.user:
+    name: "{{ bootstrap_user }}"
+    groups: "{{ bootstrap_groups[ansible_os_family] }}"
+    append: true
+
+- name: Lock user password
+  ansible.builtin.user:
+    name: "{{ bootstrap_user }}"
+    password_lock: "{{ bootstrap_lock_password }}"
+
+- name: Reboot server
+  ansible.builtin.reboot:
+    reboot_timeout: "{{ bootstrap_reboot_timeout }}"

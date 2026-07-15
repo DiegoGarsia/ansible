@@ -1,0 +1,7 @@
+---
+- name: Configure nginx reverse proxy
+  hosts: nginx_host
+  become: true
+
+  roles:
+    - nginx

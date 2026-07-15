@@ -1,0 +1,18 @@
+---
+- name: Deploy forward zone
+  template:
+    src: db.forward.j2
+    dest: "/etc/bind/db.{{ dns_domain }}"
+    owner: root
+    group: bind
+    mode: "0644"
+  notify: restart bind9
+
+- name: Deploy reverse zone
+  template:
+    src: db.reverse.j2
+    dest: /etc/bind/db.reverse
+    owner: root
+    group: bind
+    mode: "0644"
+  notify: restart bind9

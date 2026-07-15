@@ -1,0 +1,16 @@
+---
+bootstrap_user: diego
+
+bootstrap_shell: /bin/bash
+
+bootstrap_create_home: true
+
+bootstrap_lock_password: true
+
+bootstrap_public_key: diego.pub
+
+bootstrap_groups:
+  Debian: sudo
+  RedHat: wheel
+
+bootstrap_reboot_timeout: 600

@@ -1,0 +1,40 @@
+---
+- name: Install nginx
+  ansible.builtin.package:
+    name: nginx
+    state: present
+
+- name: Create directory for private keys
+  ansible.builtin.file:
+    path: /etc/ssl/private
+    state: directory
+    mode: "0700"
+
+- name: Generate wildcard certificate
+  ansible.builtin.command:
+    cmd: >
+      openssl req -x509 -nodes
+      -days 365
+      -newkey rsa:2048
+      -keyout /etc/ssl/private/nginx-wildcard.key
+      -out /etc/ssl/certs/nginx-wildcard.crt
+      -subj "/CN=*.diego.home"
+    creates: /etc/ssl/private/nginx-wildcard.key
+
+- name: Remove default nginx site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Restart nginx
+
+- name: Deploy reverse proxy configuration
+  ansible.builtin.template:
+    src: reverse_proxy.conf.j2
+    dest: /etc/nginx/conf.d/reverse_proxy.conf
+
+- name: Enable nginx
+  ansible.builtin.service:
+    name: nginx
+    enabled: true
+    state: started
+

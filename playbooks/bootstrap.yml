@@ -1,0 +1,8 @@
+---
+- name: Bootstrap new servers
+  hosts: managed
+  become: true
+  gather_facts: true
+
+  roles:
+    - bootstrap
