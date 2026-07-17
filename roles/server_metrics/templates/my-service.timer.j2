@@ -1,0 +1,10 @@
+[Unit]
+Description=Run server metrics every 5 minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+Unit=my-service.service
+
+[Install]
+WantedBy=timers.target

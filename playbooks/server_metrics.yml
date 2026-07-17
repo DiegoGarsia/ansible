@@ -1,0 +1,7 @@
+---
+- name: Install server metrics collector
+  hosts: managed
+  become: true
+
+  roles:
+    - server_metrics

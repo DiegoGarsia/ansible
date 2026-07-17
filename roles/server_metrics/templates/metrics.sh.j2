@@ -1,0 +1,21 @@
+#!/bin/bash
+
+LOG_TAG="my-service"
+
+echo "===== Server metrics ====="
+
+echo "Date: $(date)"
+
+echo
+echo "Load Average:"
+uptime
+
+echo
+echo "Disk usage:"
+df -h /
+
+echo
+echo "Top 5 memory consuming processes:"
+ps aux --sort=-%mem | head -n 6
+
+echo "=========================="

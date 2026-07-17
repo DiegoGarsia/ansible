@@ -1,0 +1,37 @@
+---
+- name: Install metrics script
+  ansible.builtin.template:
+    src: metrics.sh.j2
+    dest: /usr/local/bin/metrics.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+
+- name: Install systemd service
+  ansible.builtin.template:
+    src: my-service.service.j2
+    dest: /etc/systemd/system/my-service.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+
+
+- name: Install systemd timer
+  ansible.builtin.template:
+    src: my-service.timer.j2
+    dest: /etc/systemd/system/my-service.timer
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+
+
+- name: Enable and start timer
+  ansible.builtin.systemd:
+    name: my-service.timer
+    enabled: true
+    state: started

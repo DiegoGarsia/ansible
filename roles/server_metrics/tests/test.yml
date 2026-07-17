@@ -1,0 +1,7 @@
+---
+- name: Verify server_metrics role
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - server_metrics
