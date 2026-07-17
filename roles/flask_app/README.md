@@ -1,38 +1,172 @@
-Role Name
-=========
+# Flask_app Role
 
-A brief description of the role goes here.
+Роль `flask_app` предназначена для автоматического развертывания Flask-приложения на backend-серверах.
 
-Requirements
-------------
+В процессе выполнения роль:
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+- устанавливает необходимые пакеты;
+- создает каталог приложения;
+- копирует исходный код приложения;
+- создает виртуальное окружение Python (`venv`);
+- устанавливает зависимости из `requirements.txt`;
+- создает и настраивает systemd-службу;
+- запускает Flask-приложение;
+- на RedHat-подобных системах автоматически открывает порт **8000/tcp** в `firewalld`.
 
-Role Variables
---------------
+---
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+## Структура роли
 
-Dependencies
-------------
+```
+flask_app/
+├── defaults/
+├── files/
+│   ├── app.py
+│   └── requirements.txt
+├── handlers/
+├── meta/
+├── tasks/
+├── templates/
+│   └── flask.service.j2
+├── tests/
+├── vars/
+└── README.md
+```
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+---
 
-Example Playbook
-----------------
+## Требования
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+Поддерживаемые операционные системы:
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+- Debian
+- Ubuntu
+- CentOS Stream
+- Rocky Linux
 
-License
--------
+Для RedHat-подобных систем используется `firewalld`.
 
-BSD
+---
 
-Author Information
-------------------
+## Что устанавливает роль
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Во время выполнения автоматически устанавливаются необходимые компоненты:
+
+- Python 3
+- pip
+- virtualenv (`venv`)
+- Flask
+- зависимости из `requirements.txt`
+
+---
+
+## Развертываемое приложение
+
+После выполнения роли приложение располагается в каталоге:
+
+```
+/opt/flask_app
+```
+
+Структура:
+
+```
+/opt/flask_app/
+├── app.py
+├── requirements.txt
+└── venv/
+```
+
+---
+
+## Systemd
+
+Роль создает службу:
+
+```
+flask.service
+```
+
+После развертывания сервис автоматически:
+
+- запускается;
+- включается в автозагрузку;
+- перезапускается при изменении приложения или unit-файла.
+
+Проверить состояние можно командой:
+
+```bash
+systemctl status flask
+```
+
+---
+
+## Firewall
+
+Для систем семейства RedHat роль автоматически:
+
+- запускает `firewalld` (если он не запущен);
+- открывает порт **8000/tcp**.
+
+Проверить можно командой:
+
+```bash
+firewall-cmd --list-ports
+```
+
+---
+
+## Проверка работы
+
+Проверить доступность приложения локально:
+
+```bash
+curl http://localhost:8000
+```
+
+Проверить доступность по сети:
+
+```bash
+curl http://<hostname>:8000
+```
+
+Ожидаемый результат:
+
+```html
+<html>
+    <body>
+        <h1>Flask backend</h1>
+        <p>Hostname: server-name</p>
+    </body>
+</html>
+```
+
+---
+
+## Использование
+
+Пример подключения роли:
+
+```yaml
+- hosts: backend
+  become: true
+
+  roles:
+    - flask_app
+```
+
+---
+
+## Особенности реализации
+
+- используется виртуальное окружение Python (`venv`);
+- приложение запускается через `systemd`;
+- изменения автоматически применяются с помощью `handlers`;
+- поддерживается идемпотентный повторный запуск роли;
+- на RedHat-подобных системах автоматически настраивается `firewalld`.
+
+---
+
+## Автор
+
+Diego

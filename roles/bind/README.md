@@ -1,4 +1,4 @@
-# Ansible Role: bind
+# Bind Role
 
 Роль предназначена для установки и настройки DNS-сервера **BIND9** на базе Ubuntu/Debian.
 
