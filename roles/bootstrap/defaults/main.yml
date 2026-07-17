@@ -1,16 +1,39 @@
 ---
 bootstrap_user: diego
-
 bootstrap_shell: /bin/bash
+bootstrap_public_key: files/access_key.pub
 
-bootstrap_create_home: true
+bootstrap_timezone: Europe/Moscow
 
-bootstrap_lock_password: true
+bootstrap_packages:
+  Debian:
+    - sudo
+    - curl
+    - wget
+    - vim
+    - git
+    - htop
+    - net-tools
+    - dnsutils
+    - qemu-guest-agent
+    - locales
 
-bootstrap_public_key: access_key.pub
+  RedHat:
+    - sudo
+    - curl
+    - wget
+    - vim
+    - git
+    - htop
+    - net-tools
+    - bind-utils
+    - qemu-guest-agent
+    - glibc-langpack-en
 
 bootstrap_groups:
   Debian: sudo
   RedHat: wheel
 
-bootstrap_reboot_timeout: 600
+ssh_service_name:
+  Debian: ssh
+  RedHat: sshd

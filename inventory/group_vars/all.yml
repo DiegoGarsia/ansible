@@ -1,5 +1,7 @@
 ---
-ansible_user: root
+ansible_user: diego
+ansible_become: true
+ansible_become_method: sudo
 
 dns_domain: diego.home
 

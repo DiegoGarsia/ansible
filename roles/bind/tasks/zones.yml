@@ -1,6 +1,6 @@
 ---
 - name: Deploy forward zone
-  template:
+  ansible.builtin.template:
     src: db.forward.j2
     dest: "/etc/bind/db.{{ dns_domain }}"
     owner: root
@@ -9,7 +9,7 @@
   notify: restart bind9
 
 - name: Deploy reverse zone
-  template:
+  ansible.builtin.template:
     src: db.reverse.j2
     dest: /etc/bind/db.reverse
     owner: root

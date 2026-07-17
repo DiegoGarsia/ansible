@@ -1,0 +1,5 @@
+---
+- name: Test bind role
+  hosts: localhost
+  roles:
+    - bind

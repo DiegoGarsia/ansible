@@ -1,6 +1,6 @@
 ---
 - name: Deploy named.conf.options
-  template:
+  ansible.builtin.template:
     src: named.conf.options.j2
     dest: /etc/bind/named.conf.options
     owner: root
@@ -9,7 +9,7 @@
   notify: restart bind9
 
 - name: Deploy named.conf.local
-  template:
+  ansible.builtin.template:
     src: named.conf.local.j2
     dest: /etc/bind/named.conf.local
     owner: root

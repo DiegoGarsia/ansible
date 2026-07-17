@@ -1,12 +1,12 @@
 ---
 - name: Install BIND9 packages
-  apt:
+  ansible.builtin.apt:
     name: "{{ bind_packages }}"
     state: present
     update_cache: true
 
 - name: Enable and start BIND9
-  service:
+  ansible.builtin.service:
     name: "{{ bind_service }}"
     enabled: true
     state: started

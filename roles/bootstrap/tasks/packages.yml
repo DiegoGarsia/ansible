@@ -1,0 +1,32 @@
+---
+- name: Install base packages on Debian
+  ansible.builtin.apt:
+    name:
+      - sudo
+      - vim
+      - curl
+      - wget
+      - git
+      - bash-completion
+      - unzip
+      - tar
+      - rsync
+      - ca-certificates
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install base packages on RedHat
+  ansible.builtin.dnf:
+    name:
+      - sudo
+      - vim
+      - curl
+      - wget
+      - git
+      - bash-completion
+      - unzip
+      - tar
+      - rsync
+      - ca-certificates
+    state: present
+  when: ansible_os_family == "RedHat"

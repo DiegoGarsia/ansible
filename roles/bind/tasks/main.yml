@@ -1,4 +1,9 @@
 ---
-- import_tasks: install.yml
-- import_tasks: config.yml
-- import_tasks: zones.yml
+- name: Install BIND packages
+  ansible.builtin.import_tasks: install.yml
+
+- name: Configure BIND
+  ansible.builtin.import_tasks: config.yml
+
+- name: Configure DNS zones
+  ansible.builtin.import_tasks: zones.yml

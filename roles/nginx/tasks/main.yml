@@ -31,10 +31,10 @@
   ansible.builtin.template:
     src: reverse_proxy.conf.j2
     dest: /etc/nginx/conf.d/reverse_proxy.conf
+    mode: "0644"
 
 - name: Enable nginx
   ansible.builtin.service:
     name: nginx
     enabled: true
     state: started
-

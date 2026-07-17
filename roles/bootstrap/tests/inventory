@@ -1,0 +1,4 @@
+---
+- name: Test bootstrap role
+  hosts: localhost
+  

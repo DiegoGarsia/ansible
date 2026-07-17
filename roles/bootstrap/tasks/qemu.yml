@@ -1,0 +1,22 @@
+---
+- name: Install and configure QEMU Guest Agent
+  when: inventory_hostname in groups["kvm"]
+  block:
+
+    - name: Install QEMU Guest Agent on Debian
+      ansible.builtin.apt:
+        name: qemu-guest-agent
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install QEMU Guest Agent on RedHat
+      ansible.builtin.dnf:
+        name: qemu-guest-agent
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Enable and start QEMU Guest Agent
+      ansible.builtin.service:
+        name: qemu-guest-agent
+        enabled: true
+        state: started

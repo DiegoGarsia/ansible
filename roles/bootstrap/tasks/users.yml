@@ -1,0 +1,32 @@
+---
+- name: Create administrator account
+  ansible.builtin.user:
+    name: "{{ bootstrap_user }}"
+    shell: "{{ bootstrap_shell }}"
+    create_home: true
+
+- name: Add administrator to privileged group
+  ansible.builtin.user:
+    name: "{{ bootstrap_user }}"
+    groups: "{{ bootstrap_groups[ansible_os_family] }}"
+    append: true
+
+- name: Lock administrator password
+  ansible.builtin.user:
+    name: "{{ bootstrap_user }}"
+    password_lock: true
+
+- name: Install administrator SSH key
+  ansible.posix.authorized_key:
+    user: "{{ bootstrap_user }}"
+    state: present
+    key: "{{ lookup('file', bootstrap_public_key) }}"
+
+- name: Configure passwordless sudo
+  ansible.builtin.template:
+    src: sudoers.j2
+    dest: "/etc/sudoers.d/{{ bootstrap_user }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
