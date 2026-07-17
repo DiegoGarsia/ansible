@@ -1,0 +1,6 @@
+---
+- name: Restart Flask
+  ansible.builtin.systemd:
+    name: flask
+    daemon_reload: true
+    state: restarted

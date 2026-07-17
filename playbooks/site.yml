@@ -1,0 +1,14 @@
+---
+- name: Deploy Flask backends
+  hosts: backend
+  become: true
+
+  roles:
+    - flask_app
+
+- name: Deploy Nginx reverse proxy
+  hosts: nginx
+  become: true
+
+  roles:
+    - nginx

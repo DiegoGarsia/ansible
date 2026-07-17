@@ -1,170 +1,196 @@
-## Описание
+# Лабораторная работа
 
-Проект автоматизирует развёртывание **Nginx Reverse Proxy** с помощью **Ansible**.
+## Тема
 
-После выполнения playbook:
-
-- устанавливается Nginx;
-- удаляется стандартный сайт (`default`);
-- создаётся конфигурация Reverse Proxy;
-- автоматически формируется upstream из backend-хостов, описанных в inventory;
-- генерируется самоподписанный wildcard SSL-сертификат;
-- Nginx начинает балансировать HTTP(S)-трафик между двумя backend-серверами.
+Развертывание HTTPS Reverse Proxy на базе Nginx с балансировкой нагрузки между Flask-приложениями с использованием Ansible.
 
 ---
 
-## Архитектура
+## Цель работы
 
-```
-                    Client
-                       │
-                  https://nginx.diego.home
-                       │
-               ┌─────────────────┐
-               │     Nginx        │
-               │ 192.168.0.101    │
-               └─────────────────┘
-                       │
-             upstream backend_servers
-               ┌──────────┴──────────┐
-               │                     │
-       192.168.0.102           192.168.0.150
-         Docker (LXC)           CentOS (KVM)
-      Python HTTP Server     Python HTTP Server
-```
+Автоматизировать развертывание инфраструктуры с использованием Ansible.
+
+В рамках работы необходимо:
+
+- развернуть два backend-сервера с Flask-приложением;
+- настроить Nginx в качестве Reverse Proxy;
+- реализовать балансировку нагрузки методом Round Robin;
+- использовать HTTPS с самоподписанным wildcard-сертификатом;
+- использовать DNS-имена вместо IP-адресов.
 
 ---
 
-## Структура проекта
+# Структура проекта
 
 ```
-ansible/
-├── inventory.ini
-├── playbook.yml
-└── roles/
-    └── nginx/
-        ├── defaults/
-        ├── handlers/
-        │   └── main.yml
-        ├── tasks/
-        │   └── main.yml
-        └── templates/
-            └── reverse_proxy.conf.j2
+.
+├── inventory
+│   ├── hosts.ini
+│   └── group_vars
+├── roles
+│   ├── flask_app
+│   └── nginx
+└── site.yml
 ```
 
 ---
 
-## Inventory
+# Используемые роли
 
-Пример inventory:
+## flask_app
 
-```ini
-[nginx_host]
-nginx ansible_host=192.168.0.101
+Выполняет:
 
-[backend]
-docker ansible_host=192.168.0.102
-centos ansible_host=192.168.0.150
-```
-
-Все серверы из группы `backend` автоматически добавляются в `upstream`.
-
----
-
-## Возможности
-
-Роль автоматически:
-
-- устанавливает Nginx;
-- удаляет стандартный сайт;
-- генерирует конфигурацию Reverse Proxy;
-- создаёт wildcard SSL-сертификат;
-- включает и запускает сервис Nginx;
-- проверяет корректность конфигурации перед перезапуском;
-- перезапускает Nginx только при изменении конфигурации.
+- установку Python;
+- создание виртуального окружения Python;
+- установку Flask;
+- копирование приложения;
+- создание systemd-сервиса;
+- запуск Flask;
+- открытие порта 8000 в firewalld (для RedHat-подобных систем).
 
 ---
 
-## SSL
+## nginx
 
-Для лабораторного стенда используется самоподписанный wildcard-сертификат:
+Выполняет:
+
+- установку Nginx;
+- копирование SSL-сертификата и приватного ключа;
+- создание конфигурации Reverse Proxy;
+- настройку HTTPS;
+- настройку балансировки нагрузки методом Round Robin;
+- запуск и проверку конфигурации Nginx.
+
+---
+
+# Используемые хосты
+
+| Имя | Назначение |
+|------|------------|
+| jumphost | управляющий сервер |
+| nginx | Reverse Proxy |
+| docker | Backend №1 |
+| centos | Backend №2 |
+
+Все серверы используют внутренний DNS.
+
+Пример записей:
 
 ```
-CN=*.diego.home
-```
-
-Создаётся автоматически при помощи OpenSSL.
-
-Используются файлы:
-
-```
-/etc/ssl/private/nginx-wildcard.key
-/etc/ssl/certs/nginx-wildcard.crt
+nginx.diego.home
+docker.diego.home
+centos.diego.home
 ```
 
 ---
 
-## Reverse Proxy
+# Балансировка
 
-Backend-серверы формируются динамически через шаблон Jinja2.
+Балансировка выполняется штатным алгоритмом Nginx — **Round Robin**.
 
-Пример итоговой конфигурации:
+Конфигурация upstream формируется автоматически из группы `backend`.
+
+Пример:
 
 ```nginx
 upstream backend_servers {
-    server 192.168.0.102:8000;
-    server 192.168.0.150:8000;
+    server docker.diego.home:8000;
+    server centos.diego.home:8000;
 }
 ```
 
 ---
 
-## Балансировка
+# HTTPS
 
-Используется стандартный алгоритм Nginx — **Round Robin**.
+Используется самоподписанный wildcard-сертификат:
 
-Проверка:
+```
+*.diego.home
+```
+
+Сертификат хранится в роли `nginx/files` и копируется на сервер средствами Ansible.
+
+---
+
+# Запуск
+
+Проверка синтаксиса:
 
 ```bash
-curl https://nginx.diego.home -k
+ansible-playbook -i inventory/hosts.ini site.yml --syntax-check
 ```
 
-Пример ответов:
+Развертывание:
 
-```
-Hello from LXC Docker (192.168.0.102)
-
-Hello from CentOS VM (192.168.0.150)
-
-Hello from LXC Docker (192.168.0.102)
+```bash
+ansible-playbook -i inventory/hosts.ini site.yml
 ```
 
 ---
 
-## Запуск
+# Проверка
+
+Проверить работу Flask:
 
 ```bash
-ansible-playbook -i inventory.ini playbook.yml
+curl http://docker.diego.home:8000
+```
+
+```bash
+curl http://centos.diego.home:8000
+```
+
+Проверить HTTPS:
+
+```bash
+curl -k https://nginx.diego.home
+```
+
+Проверить балансировку:
+
+```bash
+for i in {1..10}; do
+    curl -sk https://nginx.diego.home | grep Hostname
+done
+```
+
+В результате должны поочередно отображаться backend-серверы:
+
+```
+Hostname: docker
+Hostname: centos
+Hostname: docker
+Hostname: centos
 ```
 
 ---
 
-## Проверка конфигурации
-
-Перед перезапуском выполняется:
-
-```bash
-nginx -t
-```
-
-При ошибке в конфигурации Nginx не будет перезапущен.
-
----
-
-## Используемые технологии
+# Используемые технологии
 
 - Ansible
 - Nginx
-- OpenSSL
-- Jinja2
-- Python HTTP Server
+- Flask
+- Python 3
+- systemd
+- firewalld
+- HTTPS
+- DNS
+
+---
+
+# Особенности реализации
+
+- приложение Flask разворачивается автоматически;
+- используется виртуальное окружение Python (`venv`);
+- Nginx использует DNS-имена backend-серверов;
+- сертификат не генерируется при каждом запуске, а хранится в роли;
+- конфигурация Nginx проверяется перед перезапуском;
+- роль Flask автоматически открывает порт 8000 в firewalld для RedHat-подобных систем.
+
+---
+
+# Автор
+
+Diego

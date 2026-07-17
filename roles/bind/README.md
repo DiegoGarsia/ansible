@@ -1,211 +1,271 @@
-## Описание
+# Ansible Role: bind
 
-Данная роль предназначена для установки и настройки **BIND9** в качестве основного DNS-сервера домашней лаборатории.
+Роль предназначена для установки и настройки DNS-сервера **BIND9** на базе Ubuntu/Debian.
 
-DNS-сервер обслуживает зону:
+В результате выполнения роли автоматически:
 
-```
-diego.home
-```
-
-и автоматически создает:
-
-- прямую DNS-зону (Forward Zone);
-- обратную DNS-зону (Reverse Zone).
-
-Все DNS-записи генерируются автоматически на основании Ansible Inventory. Ручное редактирование файлов зон не требуется.
-
----
-
-# Структура проекта
-
-```
-ansible/
-├── ansible.cfg
-├── inventory
-│   ├── hosts.ini
-│   ├── group_vars
-│   │   └── all.yml
-│   └── host_vars
-├── playbooks
-│   ├── bootstrap.yml
-│   └── bind.yml
-└── roles
-    └── bind
-        ├── defaults
-        │   └── main.yml
-        ├── handlers
-        │   └── main.yml
-        ├── tasks
-        │   ├── install.yml
-        │   ├── config.yml
-        │   ├── zones.yml
-        │   └── main.yml
-        ├── templates
-        │   ├── named.conf.options.j2
-        │   ├── named.conf.local.j2
-        │   ├── db.forward.j2
-        │   └── db.reverse.j2
-        └── README.md
-```
+- устанавливаются необходимые пакеты;
+- настраивается BIND9;
+- создаются прямая и обратная зоны;
+- генерируются DNS-записи на основании inventory Ansible;
+- проверяется корректность конфигурации перед применением;
+- перезапускается служба только при изменении конфигурации.
 
 ---
 
 # Требования
 
-- Debian / Ubuntu
-- Ansible 2.15+
-- Пакет BIND9 доступен в репозиториях ОС
+- Ubuntu 24.04 LTS / Debian 12+
+- Ansible 2.16+
+- установлен пакет `bind9`
+- повышение привилегий (`become: true`)
 
 ---
 
-# Используемые группы Inventory
+# Используемые переменные
 
-DNS-сервер должен входить в группу:
+Все основные параметры определяются в `group_vars/all.yml`.
 
-```ini
-[dns_host]
-dns ansible_host=192.168.0.103
-```
+## Обязательные
 
-Все остальные серверы должны находиться в группе `managed`:
+| Переменная | Описание | Пример |
+|------------|----------|--------|
+| `dns_domain` | DNS-домен | `diego.home` |
+| `dns_server` | Имя DNS-сервера | `dns` |
+| `dns_server_ip` | IP DNS-сервера | `192.168.0.103` |
+| `dns_reverse_zone` | Обратная зона | `0.168.192.in-addr.arpa` |
+| `dns_forwarders` | Список DNS-forwarder | `192.168.0.1` |
 
-```ini
-[managed:children]
-lxc
-kvm
-```
-
-Именно эта группа используется для автоматического построения DNS-записей.
-
----
-
-# Настраиваемые параметры
-
-Файл:
-```
-inventory/group_vars/all.yml
-```
+Пример:
 
 ```yaml
-ansible_user: root
+ansible_user: diego
+ansible_become: true
+ansible_become_method: sudo
 
 dns_domain: diego.home
 
 dns_server: dns
 dns_server_ip: 192.168.0.103
 
-dns_network: 192.168.0
 dns_reverse_zone: 0.168.192.in-addr.arpa
 
 dns_forwarders:
   - 192.168.0.1
 ```
 
-## Описание переменных
+---
 
-|Переменная|Назначение|
-|---|---|
-|`dns_domain`|DNS-зона|
-|`dns_server`|Имя DNS-сервера|
-|`dns_server_ip`|IP-адрес DNS-сервера|
-|`dns_reverse_zone`|Имя обратной зоны|
-|`dns_forwarders`|DNS-серверы для пересылки внешних запросов|
+# Переменные по умолчанию
+
+`defaults/main.yml`
+
+```yaml
+bind_packages:
+  - bind9
+  - bind9-utils
+  - dnsutils
+
+bind_service: bind9
+
+dns_allowed_networks:
+  - localhost
+  - 192.168.0.0/24
+```
 
 ---
 
-# Автоматическое создание DNS-записей
+# Inventory
 
-Все записи создаются автоматически на основании Inventory.
+Роль автоматически формирует DNS-записи для всех хостов, входящих в группу `dns_records`.
+
+Пример:
+
+```ini
+[dns]
+dns ansible_host=192.168.0.103
+
+[dns_records]
+dns ansible_host=192.168.0.103
+docker ansible_host=192.168.0.104
+pg-node-01 ansible_host=192.168.0.105
+jumphost ansible_host=192.168.0.106
+```
+
+Для каждого хоста будут автоматически созданы:
+
+- A-запись;
+- PTR-запись.
+
+---
+
+# Структура роли
+
+```
+roles/
+└── bind/
+    ├── defaults/
+    ├── handlers/
+    ├── tasks/
+    ├── templates/
+    └── README.md
+```
+
+---
+
+# Проверка конфигурации
+
+Перед применением конфигурации выполняются проверки:
+
+```
+named-checkconf
+```
+
+Для зоны прямого просмотра:
+
+```
+named-checkzone <domain> /etc/bind/db.<domain>
+```
+
+Для обратной зоны:
+
+```
+named-checkzone <reverse-zone> /etc/bind/db.<reverse-zone>
+```
+
+Если обнаружена ошибка в шаблоне или зоне, выполнение playbook будет остановлено.
+
+---
+
+# Серийный номер зоны (SOA Serial)
+
+В шаблонах используется следующая конструкция:
+
+```jinja
+{{ '%Y%m%d01' | strftime }}
+```
+
+Она формирует серийный номер зоны в формате:
+
+```
+YYYYMMDDNN
+```
+
+где:
+
+- `YYYY` — год;
+- `MM` — месяц;
+- `DD` — день;
+- `NN` — порядковый номер изменения зоны за текущий день.
 
 Например:
 
-```ini
-nginx ansible_host=192.168.0.101
-docker ansible_host=192.168.0.102
-gitlab ansible_host=192.168.0.154
-master ansible_host=192.168.0.155
-worker ansible_host=192.168.0.156
+```
+2026071701
 ```
 
-После выполнения роли будет автоматически создана прямая зона:
+При повторном изменении зоны в тот же день номер версии необходимо увеличить:
 
 ```
-nginx       IN A    192.168.0.101
-docker      IN A    192.168.0.102
-gitlab      IN A    192.168.0.154
-master      IN A    192.168.0.155
-worker      IN A    192.168.0.156
+2026071702
 ```
-
-И обратная зона:
-
-```
-101 IN PTR nginx.diego.home.
-102 IN PTR docker.diego.home.
-154 IN PTR gitlab.diego.home.
-155 IN PTR master.diego.home.
-156 IN PTR worker.diego.home.
-```
-
-Добавление нового хоста в Inventory автоматически приводит к появлению соответствующих записей при следующем запуске роли.
 
 ---
 
-# Установка и настройка
+# Использование
 
-Запуск роли выполняется через playbook:
+```yaml
+- hosts: dns
+  become: true
 
-```bash
-ansible-playbook playbooks/bind.yml
+  roles:
+    - bind
 ```
 
-Во время выполнения роль:
+Запуск:
 
-1. устанавливает пакеты BIND9;
-2. включает и запускает сервис;
-3. настраивает `named.conf.options`;
-4. настраивает `named.conf.local`;
-5. генерирует прямую зону;
-6. генерирует обратную зону;
-7. при необходимости перезапускает службу BIND9.
+```bash
+ansible-playbook site.yml
+```
 
 ---
 
 # Проверка работы
 
+После выполнения роли рекомендуется выполнить следующие проверки.
+
+Проверка конфигурации:
+
+```bash
+sudo named-checkconf
+```
+
 Проверка прямой зоны:
 
 ```bash
-dig @192.168.0.103 nginx.diego.home
+sudo named-checkzone diego.home /etc/bind/db.diego.home
 ```
 
 Проверка обратной зоны:
 
 ```bash
-dig @192.168.0.103 -x 192.168.0.101
+sudo named-checkzone 0.168.192.in-addr.arpa /etc/bind/db.0.168.192.in-addr.arpa
 ```
 
-Просмотр SOA-записи:
+Проверка службы:
 
 ```bash
-dig @192.168.0.103 diego.home SOA
+systemctl status bind9
 ```
 
-Просмотр NS-записи:
+Проверка DNS:
 
 ```bash
-dig @192.168.0.103 diego.home NS
+dig dns.diego.home
+dig docker.diego.home
+dig google.com
+dig -x 192.168.0.103
 ```
 
 ---
 
-# Принцип работы
+# Особенности реализации
 
-Inventory является единственным источником информации о хостах.
+- используется модуль `template` для генерации конфигурации;
+- все изменения проходят предварительную проверку;
+- перезапуск службы выполняется только при изменении файлов;
+- DNS-записи создаются автоматически на основе inventory;
+- используются FQDN в SOA и NS-записях;
+- шаблоны не содержат жестко заданных имен хостов.
 
-При добавлении нового сервера достаточно внести его в `inventory/hosts.ini`.
+---
 
-Дополнительные изменения в роли, шаблонах или файлах зон не требуются.
+# Особенности окружения
 
-Это исключает дублирование данных и позволяет полностью управлять DNS-конфигурацией средствами Ansible.
+В лабораторной инфраструктуре используется следующая схема:
+
+```
+Клиенты
+        │
+        ▼
+BIND (192.168.0.103)
+        │
+        ▼
+Forwarders
+        │
+        ▼
+Маршрутизатор (192.168.0.1)
+        │
+        ▼
+Интернет
+```
+
+Все клиенты используют BIND в качестве основного DNS-сервера.
+
+BIND обслуживает локальную зону `diego.home`, а запросы к внешним доменам пересылает на DNS-сервер маршрутизатора через механизм `forwarders`.
+
+---
+
+# Лицензия
+
+MIT

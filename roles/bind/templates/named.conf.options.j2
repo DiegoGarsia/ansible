@@ -5,7 +5,8 @@ options {
     recursion yes;
 
     allow-query {
-        any;
+        localhost;
+        192.168.0.0/24;
     };
 
     forwarders {
@@ -21,6 +22,6 @@ options {
     };
 
     listen-on-v6 {
-        any;
+        none;
     };
 };

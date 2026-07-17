@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Diego
+  description: Deploy Flask demo application
+  company: Personal Lab
+  license: MIT
+
+  min_ansible_version: "2.16"
+
+  galaxy_tags:
+    - flask
+    - python
+
+dependencies: []

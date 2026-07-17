@@ -10,30 +10,38 @@
     state: directory
     mode: "0700"
 
-- name: Generate wildcard certificate
-  ansible.builtin.command:
-    cmd: >
-      openssl req -x509 -nodes
-      -days 365
-      -newkey rsa:2048
-      -keyout /etc/ssl/private/nginx-wildcard.key
-      -out /etc/ssl/certs/nginx-wildcard.crt
-      -subj "/CN=*.diego.home"
-    creates: /etc/ssl/private/nginx-wildcard.key
+- name: Copy wildcard certificate
+  ansible.builtin.copy:
+    src: nginx-wildcard.crt
+    dest: /etc/ssl/certs/nginx-wildcard.crt
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Copy wildcard private key
+  ansible.builtin.copy:
+    src: nginx-wildcard.key
+    dest: /etc/ssl/private/nginx-wildcard.key
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Reload nginx
 
 - name: Remove default nginx site
   ansible.builtin.file:
     path: /etc/nginx/sites-enabled/default
     state: absent
-  notify: Restart nginx
+  notify: Reload nginx
 
 - name: Deploy reverse proxy configuration
   ansible.builtin.template:
     src: reverse_proxy.conf.j2
     dest: /etc/nginx/conf.d/reverse_proxy.conf
     mode: "0644"
+  notify: Reload nginx
 
-- name: Enable nginx
+- name: Enable and start nginx
   ansible.builtin.service:
     name: nginx
     enabled: true

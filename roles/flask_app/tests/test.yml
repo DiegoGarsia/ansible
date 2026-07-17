@@ -1,0 +1,8 @@
+---
+- name: Test flask_app role
+  hosts: localhost
+  connection: local
+  become: false
+
+  roles:
+    - flask_app

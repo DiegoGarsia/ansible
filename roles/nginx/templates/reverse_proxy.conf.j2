@@ -1,6 +1,6 @@
 upstream backend_servers {
 {% for host in groups['backend'] %}
-    server {{ hostvars[host].ansible_host }}:8000;
+    server {{ host }}.diego.home:8000;
 {% endfor %}
 }
 
@@ -12,8 +12,7 @@ server {
 }
 
 server {
-    listen 443 ssl;
-    http2 on;
+    listen 443 ssl http2;
 
     server_name nginx.diego.home;
 

@@ -1,15 +1,15 @@
 $TTL 86400
 
-@ IN SOA {{ dns_server }}.{{ dns_domain }}. hostmaster.{{ dns_domain }}. (
-    {{ '%Y%m%d01' | strftime }}
-    3600
-    1800
-    604800
-    86400
+@   IN SOA {{ dns_server }}.{{ dns_domain }}. hostmaster.{{ dns_domain }}. (
+        {{ '%Y%m%d01' | strftime }}
+        3600
+        1800
+        604800
+        86400
 )
 
-@ IN NS {{ dns_server }}.
+@   IN NS {{ dns_server }}.{{ dns_domain }}.
 
-{% for host in groups['dns_records'] %}
+{% for host in groups.get('dns_records', []) %}
 {{ hostvars[host].ansible_host.split('.')[-1] }} IN PTR {{ host }}.{{ dns_domain }}.
 {% endfor %}

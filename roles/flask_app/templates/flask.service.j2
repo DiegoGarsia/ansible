@@ -1,0 +1,14 @@
+[Unit]
+Description=Flask Demo Application
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/flask_app
+ExecStart=/opt/flask_app/venv/bin/python /opt/flask_app/app.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
