@@ -1,0 +1,7 @@
+---
+- name: Configure firewall
+  hosts: managed
+  become: true
+
+  roles:
+    - firewall

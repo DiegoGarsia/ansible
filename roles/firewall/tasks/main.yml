@@ -1,0 +1,9 @@
+---
+- name: Install firewall dependencies
+  ansible.builtin.import_tasks: install.yml
+
+- name: Configure firewall
+  ansible.builtin.import_tasks: configure.yml
+
+- name: Configure firewall persistence
+  ansible.builtin.import_tasks: persist.yml

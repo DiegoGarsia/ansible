@@ -1,0 +1,7 @@
+---
+- name: Test firewall role
+
+  hosts: localhost
+
+  roles:
+    - firewall

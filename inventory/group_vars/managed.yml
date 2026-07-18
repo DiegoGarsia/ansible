@@ -1,0 +1,38 @@
+---
+firewall_default_input_policy: DROP
+firewall_default_forward_policy: DROP
+firewall_default_output_policy: ACCEPT
+
+firewall_default_sources: "{{ local_networks }}"
+
+firewall_services:
+
+  ssh:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 22
+    sources: "{{ jump_host_sources }}"
+
+  nginx:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 80
+      - 443
+    sources:
+      - 0.0.0.0/0
+
+  dns-udp:
+    protocol: udp
+    ports:
+      - 53
+    sources:
+      - 0.0.0.0/0
+
+  dns-tcp:
+    protocol: tcp
+    ports:
+      - 53
+    sources:
+      - 0.0.0.0/0

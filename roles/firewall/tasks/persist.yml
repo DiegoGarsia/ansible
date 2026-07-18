@@ -1,0 +1,43 @@
+---
+- name: Enable netfilter-persistent on Debian
+  ansible.builtin.systemd:
+    name: netfilter-persistent
+    enabled: true
+    state: started
+  when:
+    - ansible_facts.os_family == "Debian"
+
+- name: Create iptables restore service on RedHat
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/iptables-restore.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Restore iptables rules
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/sbin/iptables-restore /etc/iptables/rules.v4
+      RemainAfterExit=yes
+
+      [Install]
+      WantedBy=multi-user.target
+  when:
+    - ansible_facts.os_family == "RedHat"
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when:
+    - ansible_facts.os_family == "RedHat"
+
+- name: Enable iptables restore service
+  ansible.builtin.systemd:
+    name: iptables-restore.service
+    enabled: true
+  when:
+    - ansible_facts.os_family == "RedHat"

@@ -1,0 +1,8 @@
+---
+firewall_default_input_policy: DROP
+firewall_default_forward_policy: DROP
+firewall_default_output_policy: ACCEPT
+
+firewall_default_sources: []
+
+firewall_services: {}

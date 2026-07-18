@@ -12,3 +12,9 @@ dns_reverse_zone: 0.168.192.in-addr.arpa
 
 dns_forwarders:
   - 192.168.0.1
+
+local_networks:
+  - 192.168.0.0/24
+
+jump_host_sources:
+  - 192.168.0.100/32
