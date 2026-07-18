@@ -1,0 +1,14 @@
+---
+- name: Configure PostgreSQL
+  hosts: postgres
+  become: true
+
+  roles:
+    - postgres
+
+- name: Configure PostgreSQL backups
+  hosts: pg-node-01
+  become: true
+
+  roles:
+    - backup

@@ -1,0 +1,19 @@
+[Unit]
+Description=PostgreSQL Backup Service
+After=postgresql.service
+
+[Service]
+Type=oneshot
+
+User=postgres
+Group=postgres
+
+ExecStart={{ backup_script }}
+
+StandardOutput=journal
+StandardError=journal
+
+SyslogIdentifier=pg-backup
+
+Nice=10
+IOSchedulingClass=best-effort

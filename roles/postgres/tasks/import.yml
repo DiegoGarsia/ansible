@@ -1,0 +1,36 @@
+---
+- name: Copy SQL script
+  ansible.builtin.copy:
+    src: sql_foundation.sql
+    dest: /tmp/sql_foundation.sql
+    owner: postgres
+    group: postgres
+    mode: "0644"
+
+- name: Check if superheroes table exists
+  ansible.builtin.command:
+    cmd: >
+      sudo -u postgres psql
+      -d {{ postgres_db }}
+      -tAc
+      "SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.tables
+          WHERE table_schema='public'
+          AND table_name='superheroes'
+      );"
+  register: superheroes_table
+  changed_when: false
+
+- name: Import SQL script
+  ansible.builtin.command:
+    cmd: >
+      sudo -u postgres psql
+      -d {{ postgres_db }}
+      -f /tmp/sql_foundation.sql
+  when: superheroes_table.stdout != "t"
+
+- name: Remove temporary SQL file
+  ansible.builtin.file:
+    path: /tmp/sql_foundation.sql
+    state: absent

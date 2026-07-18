@@ -1,0 +1,7 @@
+---
+- name: Configure PostgreSQL backup cron job
+  ansible.builtin.cron:
+    name: PostgreSQL Backup
+    minute: "{{ backup_minute }}"
+    hour: "{{ backup_hour }}"
+    job: "{{ backup_script }} >> {{ backup_log }} 2>&1"

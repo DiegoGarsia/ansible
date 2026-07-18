@@ -1,0 +1,12 @@
+---
+backup_database: testdb
+
+backup_directory: /var/backups/pg
+
+backup_script: /usr/local/bin/pg-backup.sh
+
+backup_retention: 7
+
+backup_hour: "3"
+
+backup_minute: "0"

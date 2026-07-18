@@ -1,0 +1,14 @@
+---
+- name: Install PostgreSQL
+  ansible.builtin.import_tasks: install.yml
+
+- name: Configure database
+  ansible.builtin.import_tasks: database.yml
+  when: inventory_hostname == "pg-node-01"
+
+- name: Import demo database
+  ansible.builtin.import_tasks: import.yml
+  when: inventory_hostname == "pg-node-01"
+
+- name: Verify PostgreSQL
+  ansible.builtin.import_tasks: verify.yml

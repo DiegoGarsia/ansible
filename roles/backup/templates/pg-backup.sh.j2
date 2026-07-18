@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+DB_NAME="{{ backup_database }}"
+BACKUP_DIR="{{ backup_directory }}"
+RETENTION="{{ backup_retention }}"
+
+TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+BACKUP_FILE="${BACKUP_DIR}/${DB_NAME}_${TIMESTAMP}.sql"
+
+log() {
+    echo "[$(date '+%F %T')] $1"
+}
+
+mkdir -p "${BACKUP_DIR}"
+
+log "Starting backup for database '${DB_NAME}'."
+
+if pg_dump \
+    --clean \
+    --if-exists \
+    "${DB_NAME}" > "${BACKUP_FILE}"; then
+    log "Backup successfully created: ${BACKUP_FILE}"
+else
+    log "ERROR: Backup failed."
+    exit 1
+fi
+
+log "Removing old backups (keeping last ${RETENTION} copies)."
+
+if compgen -G "${BACKUP_DIR}/${DB_NAME}_*.sql" > /dev/null; then
+    ls -1t "${BACKUP_DIR}/${DB_NAME}"_*.sql \
+        | tail -n +$((RETENTION + 1)) \
+        | xargs -r rm -f
+fi
+
+log "Backup completed successfully."

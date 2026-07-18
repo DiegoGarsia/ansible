@@ -1,0 +1,13 @@
+---
+postgres_packages:
+  - postgresql
+  - postgresql-contrib
+  - python3-psycopg2
+
+postgres_service: postgresql
+
+postgres_db: testdb
+
+postgres_user: testuser
+
+postgres_password: strongpassword

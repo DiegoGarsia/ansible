@@ -1,0 +1,8 @@
+---
+- name: Create backup directory
+  ansible.builtin.file:
+    path: "{{ backup_directory }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0755"

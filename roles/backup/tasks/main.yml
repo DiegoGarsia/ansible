@@ -1,0 +1,9 @@
+---
+- name: Create backup directory
+  ansible.builtin.import_tasks: directory.yml
+
+- name: Install backup script
+  ansible.builtin.import_tasks: script.yml
+
+- name: Configure systemd timer
+  ansible.builtin.import_tasks: systemd.yml

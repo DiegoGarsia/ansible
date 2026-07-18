@@ -1,0 +1,17 @@
+---
+- name: Check PostgreSQL readiness
+  ansible.builtin.command:
+    cmd: pg_isready
+  register: postgres_ready
+  changed_when: false
+
+- name: Display PostgreSQL readiness
+  ansible.builtin.debug:
+    msg: "{{ postgres_ready.stdout }}"
+
+- name: Verify PostgreSQL readiness
+  ansible.builtin.assert:
+    that:
+      - postgres_ready.rc == 0
+    success_msg: PostgreSQL is running and accepting connections.
+    fail_msg: PostgreSQL is not accepting connections.
