@@ -1,17 +1,19 @@
 ---
-- name: Check PostgreSQL readiness
+- name: Gather PostgreSQL cluster information
   ansible.builtin.command:
-    cmd: pg_isready
-  register: postgres_ready
+    cmd: pg_lsclusters --no-header
+  register: postgres_cluster
   changed_when: false
 
-- name: Display PostgreSQL readiness
-  ansible.builtin.debug:
-    msg: "{{ postgres_ready.stdout }}"
 
-- name: Verify PostgreSQL readiness
+- name: Verify PostgreSQL cluster is online
   ansible.builtin.assert:
     that:
-      - postgres_ready.rc == 0
-    success_msg: PostgreSQL is running and accepting connections.
-    fail_msg: PostgreSQL is not accepting connections.
+      - "'online' in postgres_cluster.stdout"
+    fail_msg: "PostgreSQL cluster is not running."
+    success_msg: "PostgreSQL cluster is running."
+
+
+- name: Show PostgreSQL cluster status
+  ansible.builtin.debug:
+    msg: "{{ postgres_cluster.stdout_lines }}"

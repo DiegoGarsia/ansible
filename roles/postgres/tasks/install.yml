@@ -9,6 +9,14 @@
     name: "{{ postgres_packages }}"
     state: present
 
+- name: Create Ansible temporary directory for postgres user
+  ansible.builtin.file:
+    path: "{{ postgres_ansible_tmp_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0700"
+
 - name: Ensure PostgreSQL service is enabled
   ansible.builtin.service:
     name: "{{ postgres_service }}"

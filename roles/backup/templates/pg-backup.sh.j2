@@ -13,8 +13,6 @@ log() {
     echo "[$(date '+%F %T')] $1"
 }
 
-mkdir -p "${BACKUP_DIR}"
-
 log "Starting backup for database '${DB_NAME}'."
 
 if pg_dump \

@@ -1,30 +1,17 @@
 ---
-- name: Check if PostgreSQL user exists
-  ansible.builtin.command:
-    cmd: >
-      sudo -u postgres psql -tAc
-      "SELECT 1 FROM pg_roles WHERE rolname='{{ postgres_user }}';"
-  register: postgres_user_exists
-  changed_when: false
-
 - name: Create PostgreSQL user
-  ansible.builtin.command:
-    cmd: >
-      sudo -u postgres psql -c
-      "CREATE USER {{ postgres_user }} WITH PASSWORD '{{ postgres_password }}';"
-  when: postgres_user_exists.stdout != "1"
+  community.postgresql.postgresql_user:
+    name: "{{ postgres_user }}"
+    password: "{{ postgres_password }}"
+    state: present
+  become: true
+  become_user: postgres
 
-- name: Check if database exists
-  ansible.builtin.command:
-    cmd: >
-      sudo -u postgres psql -tAc
-      "SELECT 1 FROM pg_database WHERE datname='{{ postgres_db }}';"
-  register: postgres_db_exists
-  changed_when: false
 
 - name: Create PostgreSQL database
-  ansible.builtin.command:
-    cmd: >
-      sudo -u postgres psql -c
-      "CREATE DATABASE {{ postgres_db }} OWNER {{ postgres_user }};"
-  when: postgres_db_exists.stdout != "1"
+  community.postgresql.postgresql_db:
+    name: "{{ postgres_db }}"
+    owner: "{{ postgres_user }}"
+    state: present
+  become: true
+  become_user: postgres

@@ -7,7 +7,8 @@ postgres_packages:
 postgres_service: postgresql
 
 postgres_db: testdb
-
 postgres_user: testuser
 
-postgres_password: strongpassword
+postgres_password: "{{ vault_postgres_password }}"
+
+postgres_ansible_tmp_dir: /var/lib/postgresql/.ansible/tmp

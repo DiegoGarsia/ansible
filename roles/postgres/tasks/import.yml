@@ -2,35 +2,36 @@
 - name: Copy SQL script
   ansible.builtin.copy:
     src: sql_foundation.sql
-    dest: /tmp/sql_foundation.sql
+    dest: "/tmp/sql_foundation.sql"
     owner: postgres
     group: postgres
     mode: "0644"
+  when: inventory_hostname == groups['postgres'][0]
 
 - name: Check if superheroes table exists
-  ansible.builtin.command:
-    cmd: >
-      sudo -u postgres psql
-      -d {{ postgres_db }}
-      -tAc
-      "SELECT EXISTS (
-          SELECT 1
-          FROM information_schema.tables
-          WHERE table_schema='public'
-          AND table_name='superheroes'
-      );"
+  community.postgresql.postgresql_query:
+    db: "{{ postgres_db }}"
+    query: |
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = 'superheroes'
+      );
+  become: true
+  become_user: postgres
   register: superheroes_table
-  changed_when: false
+  when: inventory_hostname == groups['postgres'][0]
 
 - name: Import SQL script
-  ansible.builtin.command:
-    cmd: >
-      sudo -u postgres psql
-      -d {{ postgres_db }}
-      -f /tmp/sql_foundation.sql
-  when: superheroes_table.stdout != "t"
+  community.postgresql.postgresql_script:
+    db: "{{ postgres_db }}"
+    path: /tmp/sql_foundation.sql
+  become: true
+  become_user: postgres
 
 - name: Remove temporary SQL file
   ansible.builtin.file:
     path: /tmp/sql_foundation.sql
     state: absent
+  when: inventory_hostname == groups['postgres'][0]
