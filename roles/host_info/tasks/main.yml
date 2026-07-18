@@ -1,0 +1,27 @@
+---
+- name: Gather service facts
+  ansible.builtin.service_facts:
+
+- name: Show host information
+  ansible.builtin.debug:
+    msg:
+      - "Hostname: {{ ansible_hostname }}"
+      - "OS: {{ ansible_distribution }}"
+      - "Version: {{ ansible_distribution_version }}"
+      - "Kernel: {{ ansible_kernel }}"
+      - "Architecture: {{ ansible_architecture }}"
+      - "IP: {{ ansible_default_ipv4.address }}"
+
+- name: Determine service name
+  ansible.builtin.set_fact:
+    check_service: "{{ 'ssh' if ansible_distribution == 'Ubuntu' else 'sshd' }}"
+
+- name: Show service status
+  ansible.builtin.debug:
+    msg: >-
+      Service {{ check_service }} status:
+      {{
+        ansible_facts.services[check_service + '.service'].state
+        if (check_service + '.service') in ansible_facts.services
+        else 'not found'
+      }}

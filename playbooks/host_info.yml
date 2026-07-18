@@ -1,0 +1,8 @@
+---
+- name: Show information about managed hosts
+  hosts: managed
+  become: false
+  gather_facts: true
+
+  roles:
+    - host_info

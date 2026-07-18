@@ -1,0 +1,7 @@
+---
+- name: Test host_info role
+  hosts: localhost
+  gather_facts: true
+
+  roles:
+    - host_info
