@@ -1,5 +1,5 @@
 ---
-- hosts: localhost
-  remote_user: root
+- name: Test Patroni role
+  hosts: localhost
   roles:
-    - roles/patroni
+    - patroni

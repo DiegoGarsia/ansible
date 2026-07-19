@@ -1,12 +1,23 @@
 ---
-- import_tasks: repository.yml
+- name: Include repository tasks
+  ansible.builtin.import_tasks: repository.yml
 
-- import_tasks: install_etcd.yml
 
-- import_tasks: install_patroni.yml
+- name: Include etcd installation tasks
+  ansible.builtin.import_tasks: install_etcd.yml
 
-- import_tasks: configure.yml
 
-- import_tasks: service.yml
+- name: Include Patroni installation tasks
+  ansible.builtin.import_tasks: install_patroni.yml
 
-- import_tasks: verify.yml
+
+- name: Include Patroni configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+
+
+- name: Include Patroni service tasks
+  ansible.builtin.import_tasks: service.yml
+
+
+- name: Include verification tasks
+  ansible.builtin.import_tasks: verify.yml

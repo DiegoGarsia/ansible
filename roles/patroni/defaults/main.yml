@@ -47,4 +47,3 @@ postgres_superuser_password: "{{ vault_postgres_superuser_password }}"
 
 replication_user: replicator
 replication_password: "{{ vault_replication_password }}"
-
