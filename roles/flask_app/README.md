@@ -1,4 +1,4 @@
-# Flask_app Role
+# flask_app role
 
 Роль `flask_app` предназначена для автоматического развертывания Flask-приложения на backend-серверах.
 

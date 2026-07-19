@@ -1,4 +1,4 @@
-# Bind Role
+# bind role
 
 Роль предназначена для установки и настройки DNS-сервера **BIND9** на базе Ubuntu/Debian.
 

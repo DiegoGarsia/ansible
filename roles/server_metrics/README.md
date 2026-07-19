@@ -1,4 +1,4 @@
-# Server_metrics Role
+# server_metrics role
 
 Ansible-роль для установки сервиса сбора базовых метрик сервера.
 

@@ -1,4 +1,4 @@
-# Bootstrap Role
+# bootstrap role
 
 Роль **bootstrap** предназначена для первичной подготовки новых серверов после их создания Terraform или вручную.
 
