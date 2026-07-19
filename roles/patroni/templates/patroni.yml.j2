@@ -1,0 +1,74 @@
+scope: {{ patroni_scope }}
+
+namespace: /service/
+
+name: {{ inventory_hostname }}
+
+restapi:
+  listen: 0.0.0.0:{{ patroni_rest_port }}
+  connect_address: {{ ansible_host }}:{{ patroni_rest_port }}
+
+etcd3:
+  host: {{ hostvars[etcd_host].ansible_host }}:{{ etcd_port }}
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+
+    postgresql:
+      use_pg_rewind: true
+      use_slots: true
+
+      parameters:
+        wal_level: replica
+        hot_standby: "on"
+        max_wal_senders: 10
+        max_replication_slots: 10
+
+  pg_hba:
+{% for rule in patroni_pg_hba %}
+    - {{ rule }}
+{% endfor %}
+
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+
+  users:
+    postgres:
+      password: {{ postgres_superuser_password }}
+      options:
+        - createrole
+        - createdb
+
+postgresql:
+
+  listen: 0.0.0.0:5432
+
+  connect_address: {{ ansible_host }}:5432
+
+  data_dir: {{ patroni_data_dir }}
+
+  bin_dir: {{ patroni_bin_dir }}
+
+  authentication:
+
+    replication:
+      username: {{ replication_user }}
+      password: {{ replication_password }}
+
+    superuser:
+      username: postgres
+      password: {{ postgres_superuser_password }}
+
+  parameters:
+    unix_socket_directories: /var/run/postgresql
+
+tags:
+  nofailover: false
+  noloadbalance: false
+  clonefrom: false
+  nosync: false

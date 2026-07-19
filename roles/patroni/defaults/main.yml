@@ -1,0 +1,50 @@
+---
+# PostgreSQL
+
+patroni_postgres_version: 16
+
+patroni_cluster_name: postgres-cluster
+patroni_scope: postgres
+
+patroni_data_dir: "/var/lib/postgresql/patroni"
+patroni_bin_dir: "/usr/lib/postgresql/{{ patroni_postgres_version }}/bin"
+
+postgres_port: 5432
+
+
+# ETCD
+
+etcd_host: pg-node-01
+etcd_port: 2379
+
+etcd_version: "3.6.4"
+
+etcd_download_url: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-amd64.tar.gz"
+
+etcd_install_dir: /opt/etcd
+
+
+# Patroni
+
+patroni_rest_port: 8008
+
+patroni_config_file: /etc/patroni.yml
+
+patroni_user: postgres
+patroni_group: postgres
+
+patroni_log_dir: /var/log/patroni
+
+patroni_pg_hba:
+  - host replication {{ replication_user }} 192.168.0.152/32 md5
+  - host replication {{ replication_user }} 192.168.0.153/32 md5
+  - host all all 0.0.0.0/0 md5
+
+# PostgreSQL users
+
+postgres_superuser: postgres
+postgres_superuser_password: "{{ vault_postgres_superuser_password }}"
+
+replication_user: replicator
+replication_password: "{{ vault_replication_password }}"
+

@@ -1,0 +1,12 @@
+---
+- import_tasks: repository.yml
+
+- import_tasks: install_etcd.yml
+
+- import_tasks: install_patroni.yml
+
+- import_tasks: configure.yml
+
+- import_tasks: service.yml
+
+- import_tasks: verify.yml

@@ -1,14 +1,8 @@
 ---
 galaxy_info:
-  author: DiegoGarsia
-  description: Configure PostgreSQL backup using systemd timer
+  author: Diego
+  description: PostgreSQL backup configuration using systemd timer
   license: MIT
-
   min_ansible_version: "2.16"
-
-  platforms:
-    - name: Ubuntu
-      versions:
-        - noble
 
 dependencies: []

@@ -2,358 +2,384 @@
 
 ## Описание
 
-Роль `postgres` предназначена для автоматического развертывания и первоначальной настройки сервера PostgreSQL на Ubuntu 24.04 LTS с использованием Ansible.
+Роль `postgres` предназначена для автоматизированной установки и базовой настройки PostgreSQL на Linux-серверах с использованием Ansible.
 
-В рамках выполнения роли производится:
+Роль выполняет полный первоначальный этап подготовки PostgreSQL:
 
-- установка PostgreSQL и необходимых зависимостей;
-- создание пользователя базы данных;
+- установка PostgreSQL и дополнительных расширений;
+- проверка состояния PostgreSQL-кластера;
+- создание отдельного пользователя базы данных;
 - создание тестовой базы данных;
-- импорт демонстрационной SQL-базы;
-- проверка успешности установки PostgreSQL.
+- загрузка демонстрационных данных;
+- выполнение базовой валидации работоспособности.
 
-Роль является идемпотентной и соответствует рекомендациям Ansible по использованию специализированных модулей коллекции `community.postgresql`.
+Роль разработана с учетом дальнейшего расширения инфраструктуры и используется как базовый слой перед настройкой отказоустойчивого PostgreSQL-кластера через Patroni.
 
 ---
 
-# Возможности
+# Поддерживаемая платформа
 
-После выполнения роли сервер PostgreSQL полностью готов к работе.
+Текущая реализация рассчитана на:
 
-Автоматически выполняются следующие действия:
+- Ubuntu 24.04 LTS
+- PostgreSQL 16
+- Ansible Core 2.16+
 
-- установка пакетов PostgreSQL;
-- запуск и включение службы PostgreSQL;
-- создание пользователя БД;
-- создание базы данных;
-- импорт демонстрационной базы данных;
-- проверка работоспособности PostgreSQL.
+---
+
+# Назначение роли
+
+После выполнения роли сервер получает готовый экземпляр PostgreSQL:
+
+```
+PostgreSQL
+ ├── пользователь приложения
+ ├── тестовая база данных
+ ├── загруженные таблицы и данные
+ └── проверка состояния кластера
+```
+
+Пример подготовленной структуры:
+
+```
+Database:
+    testdb
+
+User:
+    testuser
+
+Tables:
+    superheroes
+    customers
+    products
+    orders
+    sales
+```
+
+---
+
+# Что делает роль
+
+## 1. Установка PostgreSQL
+
+Роль устанавливает:
+
+- PostgreSQL server;
+- PostgreSQL contrib modules.
+
+Используется Ansible модуль:
+
+```yaml
+ansible.builtin.apt
+```
+
+Установка выполняется автоматически с учетом состояния системы.
+
+---
+
+## 2. Управление PostgreSQL cluster
+
+Ubuntu использует механизм PostgreSQL Cluster через пакет `postgresql-common`.
+
+Проверка выполняется не через:
+
+```
+systemctl status postgresql
+```
+
+так как данный сервис является мета-сервисом.
+
+Вместо этого используется:
+
+```bash
+pg_lsclusters
+```
+
+Проверяется фактическое состояние экземпляра PostgreSQL.
+
+Ожидаемый статус:
+
+```
+16 main 5432 online postgres
+```
+
+---
+
+## 3. Создание пользователя PostgreSQL
+
+Роль создает отдельного пользователя базы данных.
+
+Пример:
+
+```
+username:
+testuser
+```
+
+Пароль хранится через Ansible Vault.
+
+Используется переменная:
+
+```yaml
+postgres_password
+```
+
+которая ссылается на зашифрованное значение:
+
+```yaml
+vault_postgres_password
+```
+
+Пример:
+
+```yaml
+postgres_password: "{{ vault_postgres_password }}"
+```
+
+---
+
+## 4. Создание базы данных
+
+Создается база:
+
+```
+testdb
+```
+
+Владельцем назначается созданный пользователь:
+
+```
+testuser
+```
+
+После выполнения:
+
+```
+testuser -> owner -> testdb
+```
+
+---
+
+## 5. Импорт тестовых данных
+
+Роль содержит SQL-дамп:
+
+```
+roles/postgres/files/sql_foundation.sql
+```
+
+Данный файл содержит:
+
+- создание таблиц;
+- заполнение тестовыми данными.
+
+Перед импортом выполняется проверка наличия таблицы:
+
+```
+superheroes
+```
+
+Если таблица уже существует, повторный импорт не выполняется.
+
+Это обеспечивает идемпотентность роли.
 
 ---
 
 # Структура роли
 
 ```
-roles/postgres
+postgres
 ├── defaults
 │   └── main.yml
+│
 ├── files
 │   └── sql_foundation.sql
+│
 ├── handlers
 │   └── main.yml
-├── meta
-│   └── main.yml
+│
 ├── tasks
+│   ├── main.yml
 │   ├── install.yml
 │   ├── database.yml
 │   ├── import.yml
-│   ├── verify.yml
-│   └── main.yml
+│   └── verify.yml
+│
 ├── vars
 │   └── main.yml
+│
 └── README.md
 ```
 
 ---
 
-# Последовательность выполнения
+# Основные задачи роли
 
-Роль состоит из нескольких независимых этапов.
+## install.yml
 
-## 1. Установка PostgreSQL
+Отвечает за:
 
-Файл:
-
-```
-roles/postgres/tasks/install.yml
-```
-
-На данном этапе выполняется:
-
-- обновление кэша APT;
-- установка PostgreSQL;
-- установка PostgreSQL Contrib;
-- установка python3-psycopg2;
-- запуск службы PostgreSQL;
-- включение автозапуска службы.
-
-Используемые модули:
-
-- ansible.builtin.apt
-- ansible.builtin.systemd_service
+- установку PostgreSQL;
+- установку дополнительных пакетов;
+- запуск PostgreSQL.
 
 ---
 
-## 2. Создание пользователя и базы данных
+## database.yml
 
-Файл:
+Отвечает за:
 
-```
-roles/postgres/tasks/database.yml
-```
+- создание PostgreSQL пользователя;
+- создание базы данных;
+- назначение владельца базы.
 
-На данном этапе используются специализированные модули коллекции Community PostgreSQL.
-
-Создается пользователь:
+Использует коллекцию:
 
 ```
-testuser
+community.postgresql
 ```
-
-Создается база данных:
-
-```
-testdb
-```
-
-Владелец базы автоматически назначается созданному пользователю.
-
-Используемые модули:
-
-- community.postgresql.postgresql_user
-- community.postgresql.postgresql_db
 
 ---
 
-## 3. Импорт демонстрационной базы
+## import.yml
 
-Файл:
+Отвечает за:
 
-```
-roles/postgres/tasks/import.yml
-```
-
-Перед импортом выполняется проверка существования таблицы:
-
-```
-superheroes
-```
-
-Если таблица отсутствует, производится импорт SQL-файла.
-
-Если таблица уже существует — импорт пропускается.
-
-Это обеспечивает идемпотентность роли.
-
-Используемые модули:
-
-- ansible.builtin.copy
-- community.postgresql.postgresql_query
-- community.postgresql.postgresql_script
-- ansible.builtin.file
+- копирование SQL-файла;
+- проверку существующих объектов;
+- импорт демонстрационных данных.
 
 ---
 
-## 4. Проверка работы PostgreSQL
+## verify.yml
 
-Файл:
+Выполняет проверку:
 
-```
-roles/postgres/tasks/verify.yml
-```
-
-После завершения установки производится проверка:
-
-- служба PostgreSQL запущена;
-- служба включена в автозагрузку.
-
-При необходимости выполнение роли завершается ошибкой.
+- существует ли PostgreSQL cluster;
+- находится ли cluster в состоянии `online`.
 
 ---
 
-# Используемые переменные
+# Переменные роли
 
-Основные переменные находятся в:
+Основные переменные находятся:
 
 ```
 roles/postgres/defaults/main.yml
 ```
 
-| Переменная | Назначение |
-|------------|------------|
-| postgres_db | Имя базы данных |
-| postgres_user | Пользователь PostgreSQL |
-| postgres_password | Пароль пользователя |
-| postgres_version | Версия PostgreSQL |
+Пример:
+
+```yaml
+postgres_user: testuser
+
+postgres_db: testdb
+
+postgres_password: "{{ vault_postgres_password }}"
+```
 
 ---
 
-# Хранение пароля
+# Работа с Ansible Vault
 
-Пароль пользователя базы данных **не хранится** внутри роли.
+Чувствительные данные не хранятся внутри роли.
 
-Используется Ansible Vault.
-
-Файл:
+Используется:
 
 ```
 inventory/group_vars/vault.yml
 ```
 
-До шифрования файл имеет вид:
+Пример содержимого:
 
 ```yaml
-vault_postgres_password: "strongpassword"
+vault_postgres_password: strongpassword
 ```
 
-После создания файл шифруется командой:
+Файл должен быть зашифрован:
 
 ```bash
 ansible-vault encrypt inventory/group_vars/vault.yml
 ```
 
-В роли пароль используется следующим образом:
+---
+
+# Использование роли
+
+Пример playbook:
 
 ```yaml
-postgres_password: "{{ vault_postgres_password }}"
+- name: Install PostgreSQL
+  hosts: postgres
+  become: true
+
+  roles:
+    - postgres
 ```
 
-Таким образом секреты полностью отделены от логики роли.
-
----
-
-# Используемые коллекции
-
-Перед запуском роли необходимо установить коллекцию:
+Запуск:
 
 ```bash
-ansible-galaxy collection install community.postgresql
-```
-
-или использовать файл:
-
-```
-requirements.yml
+ansible-playbook playbooks/install_postgres.yml
 ```
 
 ---
 
-# Проверка результата
+# Особенности реализации
 
-После выполнения роли можно проверить работу PostgreSQL.
+## Идемпотентность
 
-Проверить службу:
+Роль можно запускать повторно.
 
-```bash
-systemctl status postgresql
-```
+Повторный запуск:
 
-Подключиться к базе:
+- не пересоздает пользователя;
+- не пересоздает базу;
+- не импортирует SQL повторно;
+- не ломает существующую конфигурацию.
 
-```bash
-sudo -u postgres psql -d testdb
-```
+---
 
-Просмотреть таблицы:
+## Ограничение
 
-```sql
-\dt
-```
+На текущем этапе роль предназначена для подготовки PostgreSQL.
 
-Проверить количество супергероев:
+Она не выполняет:
 
-```sql
-SELECT COUNT(*) FROM superheroes;
-```
+- настройку streaming replication;
+- настройку Patroni;
+- управление failover;
+- создание PostgreSQL HA-кластера.
 
-Ожидаемый результат:
+Эти функции реализуются отдельными ролями:
 
 ```
-7281
+etcd
+patroni
 ```
 
 ---
 
-# Идемпотентность
+# Использование в проекте
 
-Роль является полностью идемпотентной.
+Роль является первым этапом подготовки PostgreSQL-инфраструктуры.
 
-Повторный запуск playbook:
-
-- не создает пользователя повторно;
-- не создает базу данных повторно;
-- не импортирует SQL-файл повторно;
-- не изменяет уже настроенную систему.
-
-Все изменения выполняются только при необходимости.
-
----
-
-# Возможные ошибки
-
-## Не установлена коллекция
-
-Ошибка:
+Текущая архитектура:
 
 ```
-community.postgresql.postgresql_user not found
+pg-node-01
+    |
+    | PostgreSQL
+    | testdb
+    | backup
+    |
+pg-node-02
+    |
+    | PostgreSQL
+    |
+pg-node-03
+    |
+    | PostgreSQL
 ```
 
-Решение:
-
-```bash
-ansible-galaxy collection install community.postgresql
-```
-
----
-
-## Не найден psycopg2
-
-Ошибка подключения к PostgreSQL.
-
-Решение:
-
-Проверить наличие пакета:
-
-```bash
-python3-psycopg2
-```
-
----
-
-## Ошибка Vault
-
-При запуске появляется сообщение:
-
-```
-Attempting to decrypt...
-```
-
-Необходимо использовать:
-
-```bash
-ansible-playbook --ask-vault-pass
-```
-
-или
-
-```bash
-ansible-playbook --vault-password-file
-```
-
----
-
-# Используемые Ansible-модули
-
-В роли используются исключительно FQDN-модули.
-
-- ansible.builtin.apt
-- ansible.builtin.systemd_service
-- ansible.builtin.copy
-- ansible.builtin.file
-- community.postgresql.postgresql_user
-- community.postgresql.postgresql_db
-- community.postgresql.postgresql_query
-- community.postgresql.postgresql_script
-
----
-
-# Дальнейшее развитие
-
-Данная роль является базой для последующей настройки:
-
-- потоковой репликации PostgreSQL;
-- Patroni;
-- ETCD;
-- автоматического failover.
-
+Следующим этапом выполняется настройка отказоустойчивого PostgreSQL-кластера через Patroni.

@@ -1,0 +1,10 @@
+---
+- name: Install Patroni and dependencies
+  ansible.builtin.apt:
+    name:
+      - patroni
+      - python3-psycopg2
+      - python3-yaml
+    state: present
+    update_cache: true
+  when: "'patroni' in group_names"

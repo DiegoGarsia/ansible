@@ -22,3 +22,11 @@
     name: "{{ postgres_service }}"
     enabled: true
     state: started
+  when: "'patroni' not in group_names"
+
+- name: Stop PostgreSQL service on Patroni nodes
+  ansible.builtin.service:
+    name: "{{ postgres_service }}"
+    state: stopped
+    enabled: false
+  when: "'patroni' in group_names"

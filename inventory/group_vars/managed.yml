@@ -12,7 +12,8 @@ firewall_services:
     protocol: tcp
     ports:
       - 22
-    sources: "{{ jump_host_sources }}"
+    sources:
+      - 192.168.0.100/32
 
   nginx:
     enabled: true
@@ -36,3 +37,27 @@ firewall_services:
       - 53
     sources:
       - 0.0.0.0/0
+
+  etcd:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 2379
+    sources:
+      - 192.168.0.0/24
+
+  patroni:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 8008
+    sources:
+      - 192.168.0.0/24
+
+  postgres:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 5432
+    sources:
+      - 192.168.0.0/24

@@ -12,3 +12,4 @@
 
 - name: Verify PostgreSQL
   ansible.builtin.import_tasks: verify.yml
+  when: inventory_hostname == "pg-node-01"

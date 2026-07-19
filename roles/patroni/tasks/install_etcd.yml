@@ -1,0 +1,82 @@
+---
+- name: Install etcd only on etcd node
+  when: "'etcd' in group_names"
+  block:
+
+    - name: Check if etcd is already installed
+      ansible.builtin.stat:
+        path: /usr/local/bin/etcd
+      register: etcd_binary
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name: tar
+        state: present
+        update_cache: true
+      when: not etcd_binary.stat.exists
+
+    - name: Create installation directory
+      ansible.builtin.file:
+        path: "{{ etcd_install_dir }}"
+        state: directory
+        mode: "0755"
+      when: not etcd_binary.stat.exists
+
+    - name: Download etcd
+      ansible.builtin.get_url:
+        url: "{{ etcd_download_url }}"
+        dest: /tmp/etcd.tar.gz
+        mode: "0644"
+        timeout: 300
+      when: not etcd_binary.stat.exists
+
+    - name: Extract etcd
+      ansible.builtin.unarchive:
+        src: /tmp/etcd.tar.gz
+        dest: /tmp
+        remote_src: true
+      when: not etcd_binary.stat.exists
+
+    - name: Copy etcd binary
+      ansible.builtin.copy:
+        src: "/tmp/etcd-v{{ etcd_version }}-linux-amd64/etcd"
+        dest: /usr/local/bin/etcd
+        mode: "0755"
+        remote_src: true
+      when: not etcd_binary.stat.exists
+
+    - name: Copy etcdctl binary
+      ansible.builtin.copy:
+        src: "/tmp/etcd-v{{ etcd_version }}-linux-amd64/etcdctl"
+        dest: /usr/local/bin/etcdctl
+        mode: "0755"
+        remote_src: true
+      when: not etcd_binary.stat.exists
+
+    - name: Create etcd user
+      ansible.builtin.user:
+        name: etcd
+        shell: /usr/sbin/nologin
+        system: true
+
+    - name: Create data directory
+      ansible.builtin.file:
+        path: /var/lib/etcd
+        state: directory
+        owner: etcd
+        group: etcd
+        mode: "0700"
+
+    - name: Deploy systemd unit
+      ansible.builtin.template:
+        src: etcd.service.j2
+        dest: /etc/systemd/system/etcd.service
+        mode: "0644"
+      notify: Restart etcd
+
+    - name: Enable and start etcd
+      ansible.builtin.systemd_service:
+        name: etcd
+        enabled: true
+        state: started
+        daemon_reload: true

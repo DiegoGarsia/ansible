@@ -24,7 +24,7 @@
 #
 # {{ service_name }}
 #
-{% set sources = service.sources | default(firewall_default_sources) -%}
+{% set sources = (service.sources if service.sources is defined else firewall_default_sources) %}
 {% for source in sources -%}
 {% for port in service.ports -%}
 -A INPUT -p {{ service.protocol }} -s {{ source }} --dport {{ port }} -j ACCEPT

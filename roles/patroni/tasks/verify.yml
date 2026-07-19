@@ -1,0 +1,12 @@
+---
+- name: Check Patroni service
+  ansible.builtin.systemd_service:
+    name: patroni
+  register: patroni_service
+  changed_when: false
+  when: inventory_hostname != etcd_host
+
+- name: Show Patroni state
+  ansible.builtin.debug:
+    var: patroni_service.status.ActiveState
+  when: inventory_hostname != etcd_host

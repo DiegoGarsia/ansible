@@ -1,0 +1,23 @@
+[Unit]
+Description=Patroni
+After=network.target
+
+[Service]
+
+User=postgres
+
+Group=postgres
+
+Type=simple
+
+ExecStart=/usr/bin/patroni /etc/patroni.yml
+
+Restart=always
+
+RestartSec=5
+
+LimitNOFILE=10240
+
+[Install]
+
+WantedBy=multi-user.target

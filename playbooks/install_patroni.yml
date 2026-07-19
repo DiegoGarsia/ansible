@@ -1,0 +1,7 @@
+---
+- name: Install Patroni cluster
+  hosts: postgres
+  become: true
+
+  roles:
+    - patroni

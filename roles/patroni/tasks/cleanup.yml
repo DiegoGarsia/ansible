@@ -1,0 +1,20 @@
+---
+- name: Stop PostgreSQL
+  ansible.builtin.systemd:
+    name: postgresql
+    state: stopped
+  when: "'patroni' in group_names"
+
+- name: Remove default PostgreSQL cluster
+  ansible.builtin.command:
+    cmd: pg_dropcluster --stop {{ patroni_postgres_version }} main
+  register: dropcluster
+  failed_when: false
+  changed_when: dropcluster.rc == 0
+  when: "'patroni' in group_names"
+
+- name: Remove PostgreSQL data directory
+  ansible.builtin.file:
+    path: "{{ patroni_data_dir }}"
+    state: absent
+  when: "'patroni' in group_names"
