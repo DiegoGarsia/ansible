@@ -1,6 +1,6 @@
 ---
 firewall_default_input_policy: DROP
-firewall_default_forward_policy: DROP
+firewall_default_forward_policy: ACCEPT
 firewall_default_output_policy: ACCEPT
 
 firewall_default_sources: "{{ local_networks }}"
@@ -21,22 +21,18 @@ firewall_services:
     ports:
       - 80
       - 443
-    sources:
-      - 0.0.0.0/0
 
   dns-udp:
+    enabled: true
     protocol: udp
     ports:
       - 53
-    sources:
-      - 0.0.0.0/0
 
   dns-tcp:
+    enabled: true
     protocol: tcp
     ports:
       - 53
-    sources:
-      - 0.0.0.0/0
 
   etcd:
     enabled: true
@@ -61,3 +57,65 @@ firewall_services:
       - 5432
     sources:
       - 192.168.0.0/24
+
+  docker-flask:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 5000
+
+  gitlab-http:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 80
+
+  gitlab-https:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 443
+
+  gitlab-ssh:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 22
+
+  harbor:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 8080
+      - 8443
+
+  k3s-api:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 6443
+    sources:
+      - 192.168.0.0/24
+
+  k3s-supervisor:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 9345
+    sources:
+      - 192.168.0.0/24
+
+  kubelet:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 10250
+    sources:
+      - 192.168.0.0/24
+
+  nodeport:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 30000
+      - 32767

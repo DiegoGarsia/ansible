@@ -18,18 +18,25 @@
 #
 -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
-{% for service_name, service in firewall_services | dictsort -%}
-{% if service.enabled | default(true) -%}
+{% for service_name, service in firewall_services | dictsort %}
+{% if service.enabled | default(true) %}
 
 #
 # {{ service_name }}
 #
-{% set sources = (service.sources if service.sources is defined else firewall_default_sources) %}
-{% for source in sources -%}
-{% for port in service.ports -%}
+{% set sources = service.sources | default(local_networks | default([])) %}
+
+{% if sources | length > 0 %}
+{% for source in sources %}
+{% for port in service.ports %}
 -A INPUT -p {{ service.protocol }} -s {{ source }} --dport {{ port }} -j ACCEPT
 {% endfor %}
 {% endfor %}
+{% else %}
+{% for port in service.ports %}
+-A INPUT -p {{ service.protocol }} --dport {{ port }} -j ACCEPT
+{% endfor %}
+{% endif %}
 
 {% endif %}
 {% endfor %}
