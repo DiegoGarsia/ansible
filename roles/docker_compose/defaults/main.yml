@@ -1,0 +1,3 @@
+docker_compose_project_dir: /opt/flask-compose
+docker_network_name: flask_network
+docker_volume_name: backend_data

@@ -1,0 +1,16 @@
+---
+- name: Install Harbor
+  ansible.builtin.include_tasks:
+    file: install.yml
+
+- name: Configure Docker
+  ansible.builtin.include_tasks:
+    file: docker.yml
+
+- name: Deploy Harbor
+  ansible.builtin.include_tasks:
+    file: deploy.yml
+
+- name: Push docker image
+  ansible.builtin.include_tasks:
+    file: image.yml

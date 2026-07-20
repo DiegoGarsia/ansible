@@ -1,0 +1,7 @@
+---
+- name: harbor
+  hosts: docker
+  become: true
+
+  roles:
+    - harbor

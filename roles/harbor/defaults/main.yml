@@ -1,0 +1,26 @@
+---
+harbor_version: "2.14.0"
+
+harbor_dir: /opt/harbor
+
+harbor_hostname: "192.168.0.102"
+harbor_port: 8081
+
+harbor_username: admin
+
+harbor_admin_password: "Harbor12345"
+
+
+# DockerHub image
+source_image: nginx:latest
+
+
+# Harbor project
+harbor_project: library
+
+# куда пушим
+harbor_image_name: nginx
+
+
+# сколько символов брать из digest
+digest_length: 8

@@ -1,16 +1,15 @@
-# Ansible Role: Docker + Flask Application
-
+# docker role
 ## Описание
 
 Ansible-роль предназначена для автоматической установки Docker Engine на Debian-системы, подготовки простого Python Flask-приложения, сборки Docker-образа и запуска контейнера.
 
 Роль выполняет полный цикл развертывания:
 
-* подготовка хоста;
-* установка и настройка Docker;
-* копирование файлов Flask-приложения;
-* сборка Docker-образа;
-* запуск и управление контейнером.
+- подготовка хоста;
+- установка и настройка Docker;
+- копирование файлов Flask-приложения;
+- сборка Docker-образа;
+- запуск и управление контейнером.
 
 Роль разработана с учетом принципов идемпотентности: повторный запуск Ansible playbook не приводит к лишним изменениям, если система уже находится в требуемом состоянии.
 
@@ -18,14 +17,14 @@ Ansible-роль предназначена для автоматической 
 
 ## Требования
 
-* Ansible версии 2.16 или выше
-* Debian-based система
-* Доступ с правами `sudo`
-* Коллекция Ansible `community.docker`
+- Ansible версии 2.16 или выше
+- Debian-based система
+- Доступ с правами `sudo`
+- Коллекция Ansible `community.docker`
 
 Установка коллекции:
 
-```bash
+```
 ansible-galaxy collection install community.docker
 ```
 
@@ -33,7 +32,7 @@ ansible-galaxy collection install community.docker
 
 ## Структура роли
 
-```text
+```
 roles/docker/
 
 ├── tasks/
@@ -67,7 +66,7 @@ roles/docker/
 
 Устанавливается Docker Engine:
 
-```yaml
+```
 docker_packages:
   - docker.io
 ```
@@ -78,13 +77,13 @@ docker_packages:
 
 Файлы Flask-приложения копируются на сервер:
 
-```text
+```
 /opt/flask-app
 ```
 
 Используемые файлы:
 
-```text
+```
 app.py
 requirements.txt
 Dockerfile
@@ -94,13 +93,13 @@ Dockerfile
 
 После копирования исходных файлов создается Docker-образ:
 
-```text
+```
 flask-app
 ```
 
 Сборка выполняется через Ansible-модуль:
 
-```text
+```
 community.docker.docker_image
 ```
 
@@ -110,13 +109,13 @@ community.docker.docker_image
 
 Контейнер запускается через:
 
-```text
+```
 community.docker.docker_container
 ```
 
 Параметры контейнера:
 
-```yaml
+```
 name: flask-app
 port:
   - 5000:5000
@@ -125,7 +124,7 @@ restart_policy: unless-stopped
 
 После запуска приложение доступно по адресу:
 
-```text
+```
 http://<server-ip>:5000
 ```
 
@@ -135,13 +134,13 @@ http://<server-ip>:5000
 
 Основные переменные находятся в:
 
-```text
+```
 defaults/main.yml
 ```
 
 Пример:
 
-```yaml
+```
 docker_app_dir: /opt/flask-app
 
 docker_image_name: flask-app
@@ -161,7 +160,7 @@ docker_container_port: 5000
 
 Пример playbook:
 
-```yaml
+```
 ---
 - name: Deploy Flask application
   hosts: docker
@@ -173,7 +172,7 @@ docker_container_port: 5000
 
 Запуск:
 
-```bash
+```
 ansible-playbook -i inventory playbook.yml
 ```
 
@@ -183,26 +182,26 @@ ansible-playbook -i inventory playbook.yml
 
 Проверить состояние контейнера:
 
-```bash
+```
 docker ps
 ```
 
 Пример результата:
 
-```text
+```
 CONTAINER ID   IMAGE       PORTS
 xxxx           flask-app   0.0.0.0:5000->5000/tcp
 ```
 
 Проверить работу приложения:
 
-```bash
+```
 curl http://localhost:5000
 ```
 
 Ожидаемый ответ:
 
-```text
+```
 Hello from Flask inside Docker!
 ```
 
@@ -214,17 +213,16 @@ Hello from Flask inside Docker!
 
 Первый запуск:
 
-```text
+```
 changed=...
 ```
 
 Повторный запуск:
 
-```text
+```
 ok=...
 changed=0
 failed=0
 ```
 
 Ansible самостоятельно определяет необходимость установки пакетов, пересборки образа и изменения состояния контейнера.
-

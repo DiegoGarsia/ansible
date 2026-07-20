@@ -1,0 +1,16 @@
+---
+- name: Create docker cli plugins directory
+  become: true
+  file:
+    path: "{{ docker_cli_plugins_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Install docker compose v2 plugin
+  become: true
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-linux-x86_64"
+    dest: "{{ docker_cli_plugins_dir }}/docker-compose"
+    mode: "0755"
+    timeout: 120
+    force: true

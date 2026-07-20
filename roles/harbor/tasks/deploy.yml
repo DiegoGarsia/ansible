@@ -1,0 +1,62 @@
+---
+
+- name: Create Harbor config from template
+  ansible.builtin.copy:
+    src: "{{ harbor_dir }}/harbor/harbor.yml.tmpl"
+    dest: "{{ harbor_dir }}/harbor/harbor.yml"
+    remote_src: true
+    mode: "0644"
+
+- name: Configure Harbor hostname
+  ansible.builtin.lineinfile:
+    path: "{{ harbor_dir }}/harbor/harbor.yml"
+    regexp: '^hostname:'
+    line: "hostname: {{ harbor_hostname }}"
+
+- name: Configure Harbor HTTP port
+  ansible.builtin.lineinfile:
+    path: "{{ harbor_dir }}/harbor/harbor.yml"
+    regexp: '^  port:'
+    line: "  port: {{ harbor_port }}"
+
+- name: Configure Harbor admin password
+  ansible.builtin.replace:
+    path: "{{ harbor_dir }}/harbor/harbor.yml"
+    regexp: '^harbor_admin_password:.*'
+    replace: "harbor_admin_password: {{ harbor_admin_password }}"
+
+- name: Disable HTTPS in Harbor config
+  ansible.builtin.replace:
+    path: "{{ harbor_dir }}/harbor/harbor.yml"
+    regexp: '^https:'
+    replace: '#https:'
+
+- name: Comment HTTPS configuration lines
+  ansible.builtin.replace:
+    path: "{{ harbor_dir }}/harbor/harbor.yml"
+    regexp: '^(\s+)(port: 443|certificate:|private_key:)'
+    replace: '#\1\2'
+
+- name: Run Harbor prepare
+  ansible.builtin.command:
+    cmd: ./prepare
+    chdir: "{{ harbor_dir }}/harbor"
+
+- name: Configure Harbor syslog to use IPv4
+  ansible.builtin.replace:
+    path: "{{ harbor_dir }}/harbor/docker-compose.yml"
+    regexp: 'tcp://localhost:1514'
+    replace: 'tcp://127.0.0.1:1514'
+
+- name: Start Harbor
+  community.docker.docker_compose_v2:
+    project_src: "{{ harbor_dir }}/harbor"
+
+- name: Wait until Harbor is available
+  ansible.builtin.uri:
+    url: "http://{{ harbor_hostname }}:{{ harbor_port }}/api/v2.0/ping"
+    status_code: 200
+  register: harbor_ready
+  retries: 30
+  delay: 10
+  until: harbor_ready.status == 200

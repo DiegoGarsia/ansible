@@ -1,0 +1,27 @@
+---
+
+- name: Create harbor directory
+  ansible.builtin.file:
+    path: "{{ harbor_dir }}"
+    state: directory
+    mode: "0755"
+
+
+- name: Check Harbor archive
+  ansible.builtin.stat:
+    path: "{{ harbor_dir }}/harbor-offline-installer.tgz"
+  register: harbor_archive
+
+
+- name: Download Harbor installer
+  ansible.builtin.get_url:
+    url: "https://github.com/goharbor/harbor/releases/download/v{{ harbor_version }}/harbor-offline-installer-v{{ harbor_version }}.tgz"
+    dest: "{{ harbor_dir }}/harbor-offline-installer-v{{ harbor_version }}.tgz"
+    mode: "0644"
+    timeout: 120
+
+- name: Extract Harbor installer
+  ansible.builtin.unarchive:
+    src: "{{ harbor_dir }}/harbor-offline-installer-v{{ harbor_version }}.tgz"
+    dest: "{{ harbor_dir }}"
+    remote_src: true

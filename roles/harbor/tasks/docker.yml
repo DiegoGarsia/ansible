@@ -1,0 +1,16 @@
+---
+- name: Configure Docker insecure registry
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+    content: |
+      {
+        "insecure-registries": [
+          "{{ harbor_hostname }}:{{ harbor_port }}"
+        ]
+      }
+
+- name: Restart Docker
+  ansible.builtin.service:
+    name: docker
+    state: restarted

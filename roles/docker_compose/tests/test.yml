@@ -1,0 +1,5 @@
+---
+- hosts: docker_hosts
+  become: true
+  roles:
+    - docker_compose

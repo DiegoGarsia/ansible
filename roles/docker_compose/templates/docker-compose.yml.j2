@@ -1,0 +1,30 @@
+services:
+  frontend:
+    build:
+      context: .
+    container_name: flask_frontend
+    ports:
+      - "8080:5000"
+    networks:
+      - {{ docker_network_name }}
+    depends_on:
+      - backend
+    command: python app.py
+
+  backend:
+    build:
+      context: .
+    container_name: flask_backend
+    networks:
+      - {{ docker_network_name }}
+    volumes:
+      - {{ docker_volume_name }}:/data
+    command: python backend.py
+
+networks:
+  {{ docker_network_name }}:
+    name: {{ docker_network_name }}
+
+volumes:
+  {{ docker_volume_name }}:
+    name: {{ docker_volume_name }}

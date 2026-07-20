@@ -1,0 +1,2 @@
+docker_compose_version: v2.27.0
+docker_cli_plugins_dir: /usr/local/lib/docker/cli-plugins

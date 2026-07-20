@@ -1,0 +1,35 @@
+- name: Pull source image
+  community.docker.docker_image:
+    name: "{{ source_image }}"
+    source: pull
+
+- name: Get docker image info
+  community.docker.docker_image_info:
+    name: "{{ source_image }}"
+  register: image_info
+
+- name: Create image tag from digest
+  ansible.builtin.set_fact:
+    image_tag: "{{ image_info.images[0].RepoDigests[0].split('@')[1].split(':')[1][:digest_length] }}"
+
+- name: Define Harbor image name
+  ansible.builtin.set_fact:
+    harbor_full_image: "{{ harbor_hostname }}:{{ harbor_port }}/{{ harbor_project }}/{{ harbor_image_name }}"
+
+- name: Show generated tag
+  ansible.builtin.debug:
+    msg: "{{ harbor_full_image }}:{{ image_tag }}"
+
+- name: Tag image for Harbor
+  ansible.builtin.command:
+    cmd: >
+      docker tag
+      {{ source_image }}
+      {{ harbor_full_image }}:{{ image_tag }}
+
+- name: Push image to Harbor
+  community.docker.docker_image:
+    name: "{{ harbor_full_image }}"
+    tag: "{{ image_tag }}"
+    push: true
+    source: local

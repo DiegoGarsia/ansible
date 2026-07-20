@@ -1,0 +1,19 @@
+---
+- name: Create compose directory
+  become: true
+  file:
+    path: "{{ docker_compose_project_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy application files
+  become: true
+  copy:
+    src: "{{ item }}"
+    dest: "{{ docker_compose_project_dir }}/{{ item }}"
+    mode: "0644"
+  loop:
+    - app.py
+    - backend.py
+    - Dockerfile
+    - requirements.txt

@@ -63,6 +63,7 @@ firewall_services:
     protocol: tcp
     ports:
       - 5000
+      - 8080
 
   gitlab-http:
     enabled: true
@@ -88,6 +89,7 @@ firewall_services:
     ports:
       - 8080
       - 8443
+      - 8081
 
   k3s-api:
     enabled: true
