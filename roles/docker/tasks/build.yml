@@ -1,0 +1,24 @@
+---
+- name: Create application directory
+  ansible.builtin.file:
+    path: "{{ docker_app_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy Flask application files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ docker_app_dir }}/{{ item }}"
+    mode: "0644"
+  loop:
+    - app.py
+    - requirements.txt
+    - Dockerfile
+
+- name: Build Flask image
+  community.docker.docker_image:
+    name: "{{ docker_image_name }}"
+    source: build
+    build:
+      path: "{{ docker_app_dir }}"
+    state: present

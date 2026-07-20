@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: docker
   author: DiegoGarsia
-  description: Install Docker Engine on Debian
+  description: Install Docker Engine, build and run a Flask container
   license: MIT
 
   min_ansible_version: "2.16"
@@ -11,5 +11,10 @@ galaxy_info:
     - name: Debian
       versions:
         - all
+
+  galaxy_tags:
+    - docker
+    - containers
+    - flask
 
 dependencies: []

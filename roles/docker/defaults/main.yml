@@ -1,3 +1,13 @@
 ---
 docker_packages:
   - docker.io
+
+docker_app_dir: /opt/flask-app
+
+docker_image_name: flask-app
+
+docker_container_name: flask-app
+
+docker_host_port: 5000
+
+docker_container_port: 5000

@@ -4,4 +4,15 @@
   become: true
 
   roles:
-    - role: docker
+    - docker
+
+  post_tasks:
+    - name: Check running containers
+      ansible.builtin.command: docker ps
+      register: docker_ps
+      changed_when: false
+
+    - name: Verify Flask container is running
+      ansible.builtin.assert:
+        that:
+          - "'flask-app' in docker_ps.stdout"

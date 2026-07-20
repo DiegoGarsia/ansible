@@ -1,0 +1,10 @@
+---
+- name: Run Flask container
+  community.docker.docker_container:
+    name: "{{ docker_container_name }}"
+    image: "{{ docker_image_name }}"
+    state: started
+    restart_policy: unless-stopped
+    recreate: true
+    published_ports:
+      - "{{ docker_host_port }}:{{ docker_container_port }}"

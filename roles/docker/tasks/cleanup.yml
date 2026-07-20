@@ -1,0 +1,12 @@
+---
+- name: Disable old Flask service
+  ansible.builtin.systemd:
+    name: flask.service
+    enabled: false
+  failed_when: false
+
+- name: Stop old Flask service
+  ansible.builtin.systemd:
+    name: flask.service
+    state: stopped
+  failed_when: false
