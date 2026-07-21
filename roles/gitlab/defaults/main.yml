@@ -1,0 +1,43 @@
+---
+# Базовые адреса. Для боевого использования рекомендуется HTTPS.
+gitlab_external_url: "http://gitlab.diego.home"
+gitlab_registry_external_url: "http://gitlab.diego.home:5050"
+gitlab_package: gitlab-ce
+gitlab_edition: ce
+
+# GitLab Omnibus использует встроенный Registry.
+gitlab_registry_enabled: true
+gitlab_letsencrypt_enabled: false
+gitlab_manage_ufw: true
+gitlab_ufw_allowed_ports: [22, 80, 443, 5050]
+
+gitlab_install_docker: true
+gitlab_runner_install: true
+gitlab_runner_name: "{{ inventory_hostname }}-docker"
+gitlab_runner_executor: docker
+gitlab_runner_docker_image: docker:27
+gitlab_runner_privileged: true
+gitlab_runner_tags: "docker,linux"
+gitlab_runner_run_untagged: false
+gitlab_runner_locked: false
+
+# Передайте runner authentication token (начинается с glrt-) через Ansible Vault.
+gitlab_runner_token: ""
+
+# У GitLab без TLS Docker должен считать Registry небезопасным.
+gitlab_docker_insecure_registries:
+  - "{{ gitlab_registry_external_url | regex_replace('^https?://', '') }}"
+
+# Необязательное создание переменных проекта через API.
+# API-токен и значения переменных храните в vault-файле, а не в defaults.
+gitlab_project_id: ""
+gitlab_api_token: ""
+gitlab_cicd_variables: []
+# Пример (значения вынесите в vault.yml):
+# gitlab_cicd_variables:
+#   - key: DEPLOY_TOKEN
+#     value: "{{ vault_deploy_token }}"
+#     masked: true
+#     protected: true
+#     variable_type: env_var
+

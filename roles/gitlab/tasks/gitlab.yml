@@ -1,0 +1,44 @@
+---
+- name: Download GitLab repository installer
+  ansible.builtin.get_url:
+    url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh
+    dest: /usr/local/sbin/install-gitlab-ce-repository
+    mode: '0755'
+
+- name: Add GitLab CE package repository
+  ansible.builtin.command: /usr/local/sbin/install-gitlab-ce-repository
+  args:
+    creates: /etc/apt/sources.list.d/gitlab_gitlab-ce.list
+
+- name: Install GitLab CE
+  ansible.builtin.apt:
+    name: "{{ gitlab_package }}"
+    state: present
+    update_cache: true
+  environment:
+    EXTERNAL_URL: "{{ gitlab_external_url }}"
+
+- name: Configure GitLab Omnibus
+  ansible.builtin.blockinfile:
+    path: /etc/gitlab/gitlab.rb
+    marker: '# {mark} ANSIBLE MANAGED GITLAB ROLE'
+    block: |
+      external_url '{{ gitlab_external_url }}'
+      registry_external_url '{{ gitlab_registry_external_url }}'
+      gitlab_rails['registry_enabled'] = {{ gitlab_registry_enabled | bool | lower }}
+      letsencrypt['enable'] = {{ gitlab_letsencrypt_enabled | bool | lower }}
+  notify: Reconfigure GitLab
+
+- name: Apply GitLab configuration now
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait until GitLab API is ready
+  ansible.builtin.uri:
+    url: "{{ gitlab_external_url }}/-/health"
+    status_code: 200
+    validate_certs: "{{ gitlab_external_url is match('^https://') }}"
+  register: gitlab_health
+  retries: 30
+  delay: 10
+  until: gitlab_health.status == 200
+

@@ -1,0 +1,24 @@
+---
+- name: Install Docker Engine from Ubuntu repository
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - python3-docker
+    state: present
+    update_cache: true
+
+- name: Enable Docker service
+  ansible.builtin.systemd_service:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Configure Docker daemon
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+    content: "{{ {'insecure-registries': gitlab_docker_insecure_registries} | to_nice_json }}\n"
+  notify: Restart Docker
+
