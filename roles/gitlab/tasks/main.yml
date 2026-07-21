@@ -1,0 +1,40 @@
+---
+- name: Validate supported operating system
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == 'Ubuntu'
+      - ansible_distribution_major_version == '24'
+    fail_msg: 'Роль поддерживает Ubuntu 24.04 LTS.'
+
+- name: Install common prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - ufw
+    state: present
+    update_cache: true
+
+- name: Configure firewall
+  ansible.builtin.include_tasks: firewall.yml
+  when: gitlab_manage_ufw | bool
+
+- name: Install Docker for GitLab Runner
+  ansible.builtin.include_tasks: docker.yml
+  when: gitlab_install_docker | bool
+
+- name: Install GitLab CE and configure Container Registry
+  ansible.builtin.include_tasks: gitlab.yml
+
+- name: Install and register GitLab Runner
+  ansible.builtin.include_tasks: runner.yml
+  when: gitlab_runner_install | bool
+
+- name: Configure project CI/CD variables through GitLab API
+  ansible.builtin.include_tasks: variables.yml
+  when:
+    - gitlab_project_id | string | length > 0
+    - gitlab_api_token | length > 0
+    - gitlab_cicd_variables | length > 0
+
