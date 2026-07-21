@@ -1,6 +1,0 @@
----
-- name: Развернуть GitLab CE, Registry и Runner
-  hosts: gitlab
-  become: true
-  roles:
-    - role: gitlab

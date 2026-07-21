@@ -1,4 +1,0 @@
----
-gitlab_apt_keyring: /etc/apt/keyrings/gitlab_gitlab-ce-archive-keyring.gpg
-gitlab_runner_apt_keyring: /etc/apt/keyrings/runner_gitlab-runner-archive-keyring.gpg
-
