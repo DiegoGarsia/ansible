@@ -1,0 +1,11 @@
+# test.yml
+---
+- hosts: postgres
+  gather_facts: false
+
+  tasks:
+    - debug:
+        var: vault_postgres_superuser_password
+
+    - debug:
+        var: postgres_superuser_password

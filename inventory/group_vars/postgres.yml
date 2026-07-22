@@ -1,1 +1,0 @@
-postgres_password: "{{ vault_postgres_password }}"

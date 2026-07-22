@@ -21,6 +21,7 @@ firewall_services:
     ports:
       - 80
       - 443
+      - 8000
 
   dns-udp:
     enabled: true

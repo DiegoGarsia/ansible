@@ -1,4 +1,11 @@
 ---
+- name: Debug variables before template
+  ansible.builtin.debug:
+    msg:
+      - "postgres_superuser_password={{ postgres_superuser_password | default('UNDEF') }}"
+      - "replication_password={{ replication_password | default('UNDEF') }}"
+      - "vault_postgres_superuser_password={{ vault_postgres_superuser_password | default('UNDEF') }}"
+
 - name: Deploy Patroni configuration
   ansible.builtin.template:
     src: patroni.yml.j2

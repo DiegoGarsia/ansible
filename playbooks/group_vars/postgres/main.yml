@@ -1,0 +1,7 @@
+postgres_password: "{{ vault_postgres_password }}"
+
+# PostgreSQL users
+
+postgres_superuser_password: "{{ vault_postgres_superuser_password }}"
+
+replication_password: "{{ vault_replication_password }}"

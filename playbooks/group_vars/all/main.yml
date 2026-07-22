@@ -3,16 +3,6 @@ ansible_user: diego
 ansible_become: true
 ansible_become_method: sudo
 
-dns_domain: diego.home
-
-dns_server: dns
-dns_server_ip: 192.168.0.103
-
-dns_reverse_zone: 0.168.192.in-addr.arpa
-
-dns_forwarders:
-  - 192.168.0.1
-
 local_networks:
   - 192.168.0.0/24
 
