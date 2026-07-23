@@ -1,0 +1,32 @@
+---
+- name: Disable Linux firewalls (lab environment)
+  hosts: managed
+  become: true
+
+  tasks:
+    - name: Stop and disable firewalld
+      ansible.builtin.systemd:
+        name: firewalld
+        state: stopped
+        enabled: false
+      ignore_errors: true
+
+    - name: Stop and disable ufw
+      ansible.builtin.systemd:
+        name: ufw
+        state: stopped
+        enabled: false
+      ignore_errors: true
+
+    - name: Disable UFW (if installed)
+      ansible.builtin.command: ufw disable
+      register: ufw_disable
+      changed_when: "'Firewall stopped' in ufw_disable.stdout"
+      failed_when: false
+
+    - name: Stop and disable nftables
+      ansible.builtin.systemd:
+        name: nftables
+        state: stopped
+        enabled: false
+      ignore_errors: true

@@ -1,63 +1,121 @@
 ---
-- name: Download GitLab repository installer
-  ansible.builtin.get_url:
-    url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh
-    dest: /usr/local/sbin/install-gitlab-ce-repository
-    mode: '0755'
+# --- PRE-CHECKS -------------------------------------------------------------
 
-- name: Add GitLab CE package repository
-  ansible.builtin.command: /usr/local/sbin/install-gitlab-ce-repository
-  args:
-    creates: /etc/apt/sources.list.d/gitlab_gitlab-ce.list
+- name: Gather installed packages
+  ansible.builtin.package_facts:
+    manager: auto
+  changed_when: false
 
-- name: Install GitLab CE
-  ansible.builtin.apt:
-    name: "{{ gitlab_package }}"
-    state: present
-    update_cache: true
-  environment:
-    EXTERNAL_URL: "{{ gitlab_external_url }}"
+- name: Determine GitLab installation state
+  ansible.builtin.set_fact:
+    gitlab_needs_install: >
+      'gitlab-ce' not in (ansible_facts.packages | default({}))
+    gitlab_needs_reconfigure: >
+      'gitlab-ce' in (ansible_facts.packages | default({}))
+      and (gitlab_force_reconfigure | default(false) | bool)
 
-- name: Configure GitLab Omnibus
-  ansible.builtin.blockinfile:
-    path: /etc/gitlab/gitlab.rb
-    marker: '# {mark} ANSIBLE MANAGED GITLAB ROLE'
-    block: |
-      external_url '{{ gitlab_external_url }}'
-      registry_external_url '{{ gitlab_registry_external_url }}'
-      gitlab_rails['registry_enabled'] = {{ gitlab_registry_enabled | bool | lower }}
-      letsencrypt['enable'] = {{ gitlab_letsencrypt_enabled | bool | lower }}
-      {% if gitlab_resource_optimization | bool %}
-      #####################################
-      # Resource optimization for small VM
-      #####################################
-      # Monitoring stack
-      prometheus['enable'] = false
-      alertmanager['enable'] = false
-      grafana['enable'] = false
+- name: Gather service facts
+  ansible.builtin.service_facts:
+  when: not gitlab_needs_install
 
-      # Exporters
-      node_exporter['enable'] = false
-      redis_exporter['enable'] = false
-      postgres_exporter['enable'] = false
-      gitlab_exporter['enable'] = false
+- name: Abort if gitlab-runsvdir is not active
+  ansible.builtin.fail:
+    msg: >
+      gitlab-runsvdir is not running.
+      Fix the service before executing this role.
+  when:
+    - not gitlab_needs_install
+    - >
+      'gitlab-runsvdir.service' not in ansible_facts.services or
+      ansible_facts.services['gitlab-runsvdir.service'].state != 'running'
 
-      # Kubernetes Agent
-      gitlab_kas['enable'] = false
+- name: Check current GitLab status
+  ansible.builtin.command:
+    cmd: gitlab-ctl status
+  register: gitlab_current_status
+  changed_when: false
+  failed_when: false
+  when: not gitlab_needs_install
 
-      # Puma and Sidekiq
-      puma['worker_processes'] = {{ gitlab_puma_worker_processes }}
-      sidekiq['max_concurrency'] = {{ gitlab_sidekiq_max_concurrency }}
-      {% endif %}
-  notify:
-    - Reconfigure GitLab
-    - Restart GitLab
+- name: Check current GitLab status
+  ansible.builtin.command:
+    cmd: gitlab-ctl status
+  register: gitlab_current_status
+  changed_when: false
+  failed_when: false
+  when: not gitlab_needs_install
 
-- name: Apply GitLab configuration now
-  ansible.builtin.meta: flush_handlers
+# --- INSTALL / RECONFIGURE --------------------------------------------------
+
+- name: Install or reconfigure GitLab
+  when:
+    - gitlab_needs_install
+      or gitlab_needs_reconfigure
+      or (
+        not gitlab_needs_install
+        and "'down'" in gitlab_current_status.stdout
+      )
+  block:
+
+    - name: Download GitLab repository installer
+      ansible.builtin.get_url:
+        url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh
+        dest: /usr/local/sbin/install-gitlab-ce-repository
+        mode: "0755"
+        force: false
+
+    - name: Add GitLab CE package repository
+      ansible.builtin.command:
+        cmd: /usr/local/sbin/install-gitlab-ce-repository
+      args:
+        creates: /etc/apt/sources.list.d/gitlab_gitlab-ce.list
+
+    - name: Install GitLab CE
+      ansible.builtin.apt:
+        name: "{{ gitlab_package }}"
+        state: present
+        update_cache: true
+      environment:
+        EXTERNAL_URL: "{{ gitlab_external_url }}"
+
+    - name: Configure GitLab Omnibus
+      ansible.builtin.blockinfile:
+        path: /etc/gitlab/gitlab.rb
+        marker: "# {mark} ANSIBLE MANAGED GITLAB ROLE"
+        block: |
+          external_url '{{ gitlab_external_url }}'
+          registry_external_url '{{ gitlab_registry_external_url }}'
+          gitlab_rails['registry_enabled'] = {{ gitlab_registry_enabled | bool | lower }}
+          letsencrypt['enable'] = {{ gitlab_letsencrypt_enabled | bool | lower }}
+          {% if gitlab_resource_optimization | bool %}
+          #####################################
+          # Resource optimization for small VM
+          #####################################
+          prometheus['enable'] = false
+          alertmanager['enable'] = false
+
+          node_exporter['enable'] = false
+          redis_exporter['enable'] = false
+          postgres_exporter['enable'] = false
+          gitlab_exporter['enable'] = false
+
+          gitlab_kas['enable'] = false
+
+          puma['worker_processes'] = {{ gitlab_puma_worker_processes }}
+          sidekiq['max_concurrency'] = {{ gitlab_sidekiq_max_concurrency }}
+          {% endif %}
+      notify:
+        - Reconfigure GitLab
+        - Restart GitLab
+
+    - name: Apply GitLab configuration
+      ansible.builtin.meta: flush_handlers
+
+# --- VERIFICATION -----------------------------------------------------------
 
 - name: Verify GitLab services status
-  ansible.builtin.command: gitlab-ctl status
+  ansible.builtin.command:
+    cmd: gitlab-ctl status
   changed_when: false
 
 - name: Wait until GitLab API is ready

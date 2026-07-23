@@ -21,4 +21,3 @@
     mode: '0644'
     content: "{{ {'insecure-registries': gitlab_docker_insecure_registries} | to_nice_json }}\n"
   notify: Restart Docker
-

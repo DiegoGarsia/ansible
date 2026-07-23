@@ -37,4 +37,3 @@
     - gitlab_project_id | string | length > 0
     - gitlab_api_token | length > 0
     - gitlab_cicd_variables | length > 0
-

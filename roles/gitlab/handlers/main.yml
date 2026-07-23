@@ -1,10 +1,15 @@
 ---
 - name: Reconfigure GitLab
-  ansible.builtin.command: gitlab-ctl reconfigure
-  changed_when: true
+  ansible.builtin.command:
+    cmd: gitlab-ctl reconfigure
+  register: gitlab_reconfigure
+  changed_when: >
+    'Starting Chef Client' in gitlab_reconfigure.stdout
+    or 'Running handlers' in gitlab_reconfigure.stdout
 
 - name: Restart GitLab
-  ansible.builtin.command: gitlab-ctl restart
+  ansible.builtin.command:
+    cmd: gitlab-ctl restart
   changed_when: true
 
 - name: Restart Docker

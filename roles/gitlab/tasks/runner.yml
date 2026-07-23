@@ -3,10 +3,13 @@
   ansible.builtin.get_url:
     url: https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh
     dest: /usr/local/sbin/install-gitlab-runner-repository
-    mode: '0755'
+    mode: "0755"
+    force: false
+    timeout: 60
 
 - name: Add GitLab Runner package repository
-  ansible.builtin.command: /usr/local/sbin/install-gitlab-runner-repository
+  ansible.builtin.command:
+    cmd: /usr/local/sbin/install-gitlab-runner-repository
   args:
     creates: /etc/apt/sources.list.d/runner_gitlab-runner.list
 
@@ -16,16 +19,18 @@
     state: present
     update_cache: true
 
-- name: Enable GitLab Runner systemd service
+- name: Enable GitLab Runner service
   ansible.builtin.systemd_service:
     name: gitlab-runner
     enabled: true
     state: started
 
-- name: Check whether this runner is already registered
-  ansible.builtin.command: gitlab-runner list
+- name: Check registered runners
+  ansible.builtin.command:
+    cmd: gitlab-runner list
   register: gitlab_runner_list
   changed_when: false
+  failed_when: false
 
 - name: Register Docker runner
   ansible.builtin.command:
@@ -41,23 +46,16 @@
       - "{{ gitlab_runner_executor }}"
       - --description
       - "{{ gitlab_runner_name }}"
-      - --tag-list
-      - "{{ gitlab_runner_tags }}"
       - --docker-image
       - "{{ gitlab_runner_docker_image }}"
-      - --docker-privileged
-      - "{{ gitlab_runner_privileged | bool | lower }}"
-      - --run-untagged
-      - "{{ gitlab_runner_run_untagged | bool | lower }}"
-      - --locked
-      - "{{ gitlab_runner_locked | bool | lower }}"
+      - --docker-privileged=true
+  register: gitlab_runner_register
+  changed_when: gitlab_runner_register.rc == 0
   when:
     - gitlab_runner_token | length > 0
-    - gitlab_runner_name not in gitlab_runner_list.stdout
-  no_log: true
+    - gitlab_runner_name not in gitlab_runner_list.stdout_lines | join('\n')
 
 - name: Report missing runner token
   ansible.builtin.debug:
-    msg: 'Runner не зарегистрирован: задайте gitlab_runner_token из Ansible Vault.'
+    msg: "Runner не зарегистрирован: задайте gitlab_runner_token из Ansible Vault."
   when: gitlab_runner_token | length == 0
-

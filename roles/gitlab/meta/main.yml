@@ -8,6 +8,8 @@ galaxy_info:
   platforms:
     - name: Ubuntu
       versions:
-        - noble
+        - all
+    - name: Debian
+      versions:
+        - bookworm
 dependencies: []
-

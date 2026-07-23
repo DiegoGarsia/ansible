@@ -8,9 +8,6 @@ harbor_port: 8081
 
 harbor_username: admin
 
-harbor_admin_password: "Harbor12345"
-
-
 # DockerHub image
 source_image: nginx:latest
 

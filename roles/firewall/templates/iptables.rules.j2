@@ -24,7 +24,9 @@
 #
 # {{ service_name }}
 #
-{% set sources = service.sources | default(local_networks | default([])) %}
+{% set sources = service.sources | default(firewall_default_sources | default([])) %}
+
+{% if service.ports is defined %}
 
 {% if sources | length > 0 %}
 {% for source in sources %}
@@ -36,6 +38,18 @@
 {% for port in service.ports %}
 -A INPUT -p {{ service.protocol }} --dport {{ port }} -j ACCEPT
 {% endfor %}
+{% endif %}
+
+{% else %}
+
+{% if sources | length > 0 %}
+{% for source in sources %}
+-A INPUT -p {{ service.protocol }} -s {{ source }} -j ACCEPT
+{% endfor %}
+{% else %}
+-A INPUT -p {{ service.protocol }} -j ACCEPT
+{% endif %}
+
 {% endif %}
 
 {% endif %}

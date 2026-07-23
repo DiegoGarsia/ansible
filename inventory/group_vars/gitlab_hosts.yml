@@ -4,7 +4,7 @@ gitlab_registry_external_url: "http://gitlab.diego.home:5050"
 gitlab_runner_name: "gitlab-diego-home-docker"
 gitlab_runner_tags: "docker,linux"
 # Оставьте пустым при первом запуске. После создания Runner раскомментируйте.
-gitlab_runner_token: ""
+gitlab_runner_token: "glrt-rN4RSzN-Lcs_HS-gQTYIM286MQpwOjIKdDozCnU6Mw8.01.1717voo2m"
 # gitlab_runner_token: "{{ vault_gitlab_runner_token }}"
 
 # Заполните после создания проекта. ID можно взять в Settings -> General.

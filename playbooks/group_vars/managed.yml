@@ -15,6 +15,10 @@ firewall_services:
     sources:
       - 192.168.0.100/32
 
+  icmp:
+    enabled: true
+    protocol: icmp
+
   nginx:
     enabled: true
     protocol: tcp
@@ -40,24 +44,18 @@ firewall_services:
     protocol: tcp
     ports:
       - 2379
-    sources:
-      - 192.168.0.0/24
 
   patroni:
     enabled: true
     protocol: tcp
     ports:
       - 8008
-    sources:
-      - 192.168.0.0/24
 
   postgres:
     enabled: true
     protocol: tcp
     ports:
       - 5432
-    sources:
-      - 192.168.0.0/24
 
   docker-flask:
     enabled: true
@@ -65,24 +63,6 @@ firewall_services:
     ports:
       - 5000
       - 8080
-
-  gitlab-http:
-    enabled: true
-    protocol: tcp
-    ports:
-      - 80
-
-  gitlab-https:
-    enabled: true
-    protocol: tcp
-    ports:
-      - 443
-
-  gitlab-ssh:
-    enabled: true
-    protocol: tcp
-    ports:
-      - 22
 
   harbor:
     enabled: true
@@ -97,14 +77,18 @@ firewall_services:
     protocol: tcp
     ports:
       - 6443
-    sources:
-      - 192.168.0.0/24
 
   k3s-supervisor:
     enabled: true
     protocol: tcp
     ports:
       - 9345
+
+  dns-ca-k3s:
+    enabled: true
+    protocol: tcp
+    ports:
+      - 9000
     sources:
       - 192.168.0.0/24
 
@@ -113,8 +97,12 @@ firewall_services:
     protocol: tcp
     ports:
       - 10250
-    sources:
-      - 192.168.0.0/24
+
+  flannel:
+    enabled: true
+    protocol: udp
+    ports:
+      - 8472
 
   nodeport:
     enabled: true
