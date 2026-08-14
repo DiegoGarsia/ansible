@@ -6,12 +6,24 @@ external_url '{{ gitlab_clarity_external_url }}'
 registry_external_url '{{ gitlab_clarity_registry_external_url }}'
 
 # ---------------------------------------------------------------------------
+# TLS / HTTPS — wildcard certificate from the lab internal CA.
+# Certificate and key are delivered to the VM by tasks/tls.yml (Stage 1).
+# ---------------------------------------------------------------------------
+nginx['ssl_certificate'] = '{{ gitlab_clarity_tls_cert_path }}'
+nginx['ssl_certificate_key'] = '{{ gitlab_clarity_tls_key_path }}'
+
+# Keep HTTP on port 80 available during the transition; no auto redirect.
+nginx['redirect_http_to_https'] = false
+
+# ---------------------------------------------------------------------------
 # Container Registry
 # ---------------------------------------------------------------------------
 gitlab_rails['registry_enabled'] = {{ gitlab_clarity_registry_enabled | bool | lower }}
+registry_nginx['ssl_certificate'] = '{{ gitlab_clarity_tls_cert_path }}'
+registry_nginx['ssl_certificate_key'] = '{{ gitlab_clarity_tls_key_path }}'
 
 # ---------------------------------------------------------------------------
-# Let's Encrypt (disabled — HTTP-only lab environment)
+# Let's Encrypt (disabled — self-signed lab CA, no public domain)
 # ---------------------------------------------------------------------------
 letsencrypt['enable'] = {{ gitlab_clarity_letsencrypt_enabled | bool | lower }}
 

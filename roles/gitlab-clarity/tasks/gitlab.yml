@@ -80,11 +80,11 @@
     var: gitlab_clarity_status.stdout_lines
   when: gitlab_clarity_status.stdout_lines is defined
 
-- name: Wait until GitLab health endpoint is ready
+- name: Wait until GitLab health endpoint is ready (TLS verified via internal CA)
   ansible.builtin.uri:
     url: "{{ gitlab_clarity_external_url }}/-/health"
     status_code: 200
-    validate_certs: false
+    ca_path: "{{ gitlab_clarity_tls_ca_path }}"
   register: gitlab_clarity_health
   retries: 30
   delay: 10

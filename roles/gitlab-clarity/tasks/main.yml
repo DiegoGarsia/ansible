@@ -8,5 +8,11 @@
 - name: Add GitLab CE repository
   ansible.builtin.include_tasks: repository.yml
 
+# TLS Stage 1/2: certificates and internal CA must be in place BEFORE
+# GitLab Omnibus is configured with HTTPS (gitlab.rb references them and
+# the health check verifies TLS against the internal CA).
+- name: Prepare TLS certificates for HTTPS
+  ansible.builtin.include_tasks: tls.yml
+
 - name: Install and configure GitLab CE
   ansible.builtin.include_tasks: gitlab.yml

@@ -1,0 +1,138 @@
+---
+# tasks/tls.yml — prepare TLS certificates for HTTPS.
+#
+# Delivers the wildcard certificate, private key and internal root CA from
+# the CONTROL NODE to the target VM. Must run BEFORE gitlab.yml, because
+# gitlab.rb.j2 references these files and the health check verifies the TLS
+# certificate against the internal CA.
+#
+# Security:
+#   - The private key is copied with mode 0600 and owner root.
+#   - no_log: true is used on the copy task that handles the private key
+#     to prevent its content from appearing in logs or stdout.
+#   - Source files are verified on the CONTROL NODE before any copy.
+#
+# Idempotency:
+#   - All copy tasks rely on Ansible's built-in checksum comparison.
+#     Repeated runs without changes show "ok" (not "changed").
+#   - update-ca-certificates runs only when the CA file was actually changed
+#     (controlled by the "changed" register of the CA copy task).
+#   - The file() task for the SSL directory is idempotent by design.
+
+# ---------------------------------------------------------------------------
+# Guard: all TLS preparation is gated by gitlab_clarity_tls_enabled.
+# ---------------------------------------------------------------------------
+- name: TLS | Assert that TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - gitlab_clarity_tls_enabled | bool
+    fail_msg: >
+      TLS stage is disabled (gitlab_clarity_tls_enabled=false).
+      Set it to true to copy certificates to the VM.
+  when: not gitlab_clarity_tls_enabled | bool
+
+# ---------------------------------------------------------------------------
+# Validate source files on the CONTROL NODE.
+# The expanduser filter expands "~" to the control node user home directory
+# (e.g. /home/diego), so the paths work correctly on the jumphost regardless
+# of the remote VM user home.
+# ---------------------------------------------------------------------------
+- name: TLS | Check TLS source files on control node
+  when: gitlab_clarity_tls_enabled | bool
+  delegate_to: localhost
+  run_once: true
+  block:
+    - name: Check wildcard certificate on control node
+      ansible.builtin.stat:
+        path: "{{ gitlab_clarity_tls_cert_source | expanduser }}"
+      register: gitlab_clarity_tls_cert_stat
+
+    - name: Check private key on control node
+      ansible.builtin.stat:
+        path: "{{ gitlab_clarity_tls_key_source | expanduser }}"
+      register: gitlab_clarity_tls_key_stat
+
+    - name: Check root CA on control node
+      ansible.builtin.stat:
+        path: "{{ gitlab_clarity_tls_ca_source | expanduser }}"
+      register: gitlab_clarity_tls_ca_stat
+
+    - name: Fail if any TLS source file is missing
+      ansible.builtin.assert:
+        that:
+          - gitlab_clarity_tls_cert_stat.stat.exists
+          - gitlab_clarity_tls_key_stat.stat.exists
+          - gitlab_clarity_tls_ca_stat.stat.exists
+        fail_msg: >-
+          One or more TLS source files are missing on the control node.
+          Expected paths (after ~ expansion):
+            cert: {{ gitlab_clarity_tls_cert_source | expanduser }}
+            key:  {{ gitlab_clarity_tls_key_source | expanduser }}
+            ca:   {{ gitlab_clarity_tls_ca_source | expanduser }}
+
+# ---------------------------------------------------------------------------
+# Create /etc/gitlab/ssl directory on the target VM.
+# ---------------------------------------------------------------------------
+- name: TLS | Create SSL directory on target VM
+  ansible.builtin.file:
+    path: "{{ gitlab_clarity_tls_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  when: gitlab_clarity_tls_enabled | bool
+
+# ---------------------------------------------------------------------------
+# Copy wildcard certificate to target VM.
+# expanduser is applied on the control node, so "~" in the source path
+# correctly resolves to the jumphost user home directory.
+# ---------------------------------------------------------------------------
+- name: TLS | Copy wildcard certificate to target VM
+  ansible.builtin.copy:
+    src: "{{ gitlab_clarity_tls_cert_source | expanduser }}"
+    dest: "{{ gitlab_clarity_tls_cert_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: gitlab_clarity_tls_enabled | bool
+
+# ---------------------------------------------------------------------------
+# Copy private key to target VM.
+# no_log: true prevents the key content from appearing in logs or stdout.
+# ---------------------------------------------------------------------------
+- name: TLS | Copy private key to target VM
+  ansible.builtin.copy:
+    src: "{{ gitlab_clarity_tls_key_source | expanduser }}"
+    dest: "{{ gitlab_clarity_tls_key_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  when: gitlab_clarity_tls_enabled | bool
+
+# ---------------------------------------------------------------------------
+# Install root CA into system trust store.
+# The register is used to decide whether to run update-ca-certificates.
+# ---------------------------------------------------------------------------
+- name: TLS | Copy root CA to system trust store
+  ansible.builtin.copy:
+    src: "{{ gitlab_clarity_tls_ca_source | expanduser }}"
+    dest: "{{ gitlab_clarity_tls_ca_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: gitlab_clarity_tls_ca_copy
+  when: gitlab_clarity_tls_enabled | bool
+
+# ---------------------------------------------------------------------------
+# Update system CA certificates — only when the CA file actually changed.
+# This ensures idempotency: repeated runs without CA changes do NOT trigger
+# update-ca-certificates.
+# ---------------------------------------------------------------------------
+- name: TLS | Update system CA certificates
+  ansible.builtin.command:
+    cmd: update-ca-certificates
+  when:
+    - gitlab_clarity_tls_enabled | bool
+    - gitlab_clarity_tls_ca_copy.changed
+  changed_when: true

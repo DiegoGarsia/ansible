@@ -43,6 +43,14 @@
         from_ip: 192.168.0.0/24
         comment: GitLab HTTP
 
+    - name: Allow HTTPS (GitLab Web UI / API)
+      community.general.ufw:
+        rule: allow
+        port: "443"
+        proto: tcp
+        from_ip: 192.168.0.0/24
+        comment: GitLab HTTPS
+
     - name: Allow Container Registry port
       community.general.ufw:
         rule: allow

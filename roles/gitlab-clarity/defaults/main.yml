@@ -3,10 +3,10 @@
 # All variables use gitlab_clarity_ prefix to avoid conflicts with the old gitlab role.
 
 # ---------------------------------------------------------------------------
-# GitLab URLs
+# GitLab URLs — HTTPS (TLS Stage 2)
 # ---------------------------------------------------------------------------
-gitlab_clarity_external_url: "http://gitlab-clarity.diego.home"
-gitlab_clarity_registry_external_url: "http://gitlab-clarity.diego.home:5050"
+gitlab_clarity_external_url: "https://gitlab-clarity.diego.home"
+gitlab_clarity_registry_external_url: "https://gitlab-clarity.diego.home:5050"
 
 # ---------------------------------------------------------------------------
 # GitLab package
@@ -25,6 +25,26 @@ gitlab_clarity_registry_enabled: true
 gitlab_clarity_letsencrypt_enabled: false
 
 # ---------------------------------------------------------------------------
+# TLS certificates — Stage 1: prepare certificates for future HTTPS migration.
+# Source files live ONLY on the CONTROL NODE (jumphost) in ~/certs/diego.home/.
+# The private key must NEVER be committed to Git or copied manually to the VM;
+# Ansible copies it from the control node during playbook execution.
+# ---------------------------------------------------------------------------
+gitlab_clarity_tls_enabled: true
+
+# Source paths on the control node (jumphost). "~" is expanded on the control
+# node at runtime (see tasks/tls.yml), never on the remote VM.
+gitlab_clarity_tls_cert_source: "~/certs/diego.home/wildcard.diego.home.crt"
+gitlab_clarity_tls_key_source: "~/certs/diego.home/wildcard.diego.home.key"
+gitlab_clarity_tls_ca_source: "~/certs/diego.home/root_ca.crt"
+
+# Destination paths on the target VM
+gitlab_clarity_tls_dir: /etc/gitlab/ssl
+gitlab_clarity_tls_cert_path: /etc/gitlab/ssl/gitlab-clarity.diego.home.crt
+gitlab_clarity_tls_key_path: /etc/gitlab/ssl/gitlab-clarity.diego.home.key
+gitlab_clarity_tls_ca_path: /usr/local/share/ca-certificates/diego-home-root-ca.crt
+
+# ---------------------------------------------------------------------------
 # Resource optimization for 2 vCPU / 4 GB RAM VM
 # ---------------------------------------------------------------------------
 gitlab_clarity_resource_optimization: true
@@ -37,7 +57,8 @@ gitlab_clarity_sidekiq_max_concurrency: 10
 gitlab_clarity_manage_ufw: true
 gitlab_clarity_ufw_allowed_ports:
   - 22    # SSH
-  - 80    # HTTP (GitLab Web UI / API)
+  - 80    # HTTP (GitLab Web UI / API) — kept for transition, will be removed later
+  - 443   # HTTPS (GitLab Web UI / API)
   - 5050  # Container Registry
 
 # ---------------------------------------------------------------------------
