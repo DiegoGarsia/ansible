@@ -1,0 +1,46 @@
+---
+# defaults file for roles/gitlab-clarity
+# All variables use gitlab_clarity_ prefix to avoid conflicts with the old gitlab role.
+
+# ---------------------------------------------------------------------------
+# GitLab URLs
+# ---------------------------------------------------------------------------
+gitlab_clarity_external_url: "http://gitlab-clarity.diego.home"
+gitlab_clarity_registry_external_url: "http://gitlab-clarity.diego.home:5050"
+
+# ---------------------------------------------------------------------------
+# GitLab package
+# ---------------------------------------------------------------------------
+gitlab_clarity_package: gitlab-ce
+gitlab_clarity_edition: ce
+
+# ---------------------------------------------------------------------------
+# Container Registry
+# ---------------------------------------------------------------------------
+gitlab_clarity_registry_enabled: true
+
+# ---------------------------------------------------------------------------
+# Let's Encrypt (disabled — HTTP-only lab environment)
+# ---------------------------------------------------------------------------
+gitlab_clarity_letsencrypt_enabled: false
+
+# ---------------------------------------------------------------------------
+# Resource optimization for 2 vCPU / 4 GB RAM VM
+# ---------------------------------------------------------------------------
+gitlab_clarity_resource_optimization: true
+gitlab_clarity_puma_worker_processes: 2
+gitlab_clarity_sidekiq_max_concurrency: 10
+
+# ---------------------------------------------------------------------------
+# UFW (firewall) management
+# ---------------------------------------------------------------------------
+gitlab_clarity_manage_ufw: true
+gitlab_clarity_ufw_allowed_ports:
+  - 22    # SSH
+  - 80    # HTTP (GitLab Web UI / API)
+  - 5050  # Container Registry
+
+# ---------------------------------------------------------------------------
+# GitLab repository script path
+# ---------------------------------------------------------------------------
+gitlab_clarity_repo_script: /usr/local/sbin/install-gitlab-ce-repository

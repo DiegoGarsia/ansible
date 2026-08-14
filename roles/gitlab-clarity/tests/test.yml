@@ -1,0 +1,6 @@
+---
+- name: Test GitLab Clarity role
+  hosts: localhost
+  remote_user: root
+  roles:
+    - gitlab-clarity

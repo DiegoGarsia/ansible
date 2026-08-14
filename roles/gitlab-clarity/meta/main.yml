@@ -1,0 +1,27 @@
+galaxy_info:
+  role_name: gitlab_clarity
+  author: Diego Lab
+  description: >
+    Install and configure GitLab CE on Ubuntu 24.04 LTS for the Clarity project.
+    Optimised for a small VM with 2 vCPU / 4 GB RAM.
+    Includes GitLab CE, built-in Container Registry, built-in PostgreSQL, built-in Redis.
+    Does NOT install Docker, GitLab Runner, k3s, or Kubernetes components.
+  company: Diego Home Lab
+
+  license: MIT
+
+  min_ansible_version: '2.14'
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+
+  galaxy_tags:
+    - gitlab
+    - devops
+    - cicd
+    - ubuntu
+    - clarity
+
+dependencies: []

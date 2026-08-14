@@ -1,0 +1,12 @@
+---
+# tasks file for roles/gitlab-clarity
+# Orchestration entrypoint — includes sub-tasks in logical order.
+
+- name: Validate OS and prerequisites
+  ansible.builtin.include_tasks: prerequisites.yml
+
+- name: Add GitLab CE repository
+  ansible.builtin.include_tasks: repository.yml
+
+- name: Install and configure GitLab CE
+  ansible.builtin.include_tasks: gitlab.yml

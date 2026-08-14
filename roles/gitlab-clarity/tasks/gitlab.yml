@@ -1,0 +1,95 @@
+---
+# tasks/gitlab.yml — Install GitLab CE, deploy configuration, verify health
+
+# ---------------------------------------------------------------------------
+# Gather package facts to determine installation state
+# ---------------------------------------------------------------------------
+- name: Gather installed packages
+  ansible.builtin.package_facts:
+    manager: auto
+  changed_when: false
+
+- name: Determine GitLab installation state
+  ansible.builtin.set_fact:
+    # NOTE: Must use "{{ }}" Jinja2 expression, NOT YAML folded block scalar (>).
+    # The > operator converts the result to a string, and the string "False"
+    # is truthy in Python, which would cause `when: not gitlab_clarity_is_installed`
+    # to evaluate incorrectly and skip installation.
+    gitlab_clarity_is_installed: "{{ 'gitlab-ce' in (ansible_facts.packages | default({})) }}"
+
+- name: Check for /etc/gitlab directory
+  ansible.builtin.stat:
+    path: /etc/gitlab
+  register: gitlab_clarity_etc_dir
+
+# ---------------------------------------------------------------------------
+# Install GitLab CE
+# ---------------------------------------------------------------------------
+- name: Install GitLab CE
+  ansible.builtin.apt:
+    name: "{{ gitlab_clarity_package }}"
+    state: present
+    update_cache: true
+  environment:
+    EXTERNAL_URL: "{{ gitlab_clarity_external_url }}"
+  when: not gitlab_clarity_is_installed
+
+# ---------------------------------------------------------------------------
+# Handle partially installed state:
+# Package exists but /etc/gitlab is missing — run reconfigure to recreate
+# the Omnibus directory structure before deploying managed configuration.
+# ---------------------------------------------------------------------------
+- name: Recreate missing /etc/gitlab structure
+  ansible.builtin.command:
+    cmd: gitlab-ctl reconfigure
+  when:
+    - gitlab_clarity_is_installed
+    - not gitlab_clarity_etc_dir.stat.exists
+  changed_when: true
+  failed_when: false
+
+# ---------------------------------------------------------------------------
+# Deploy GitLab Omnibus configuration via template
+# ---------------------------------------------------------------------------
+- name: Deploy GitLab Omnibus configuration
+  ansible.builtin.template:
+    src: gitlab.rb.j2
+    dest: /etc/gitlab/gitlab.rb
+    owner: root
+    group: root
+    mode: "0600"
+  notify:
+    - Reconfigure GitLab
+    - Restart GitLab
+
+- name: Apply GitLab configuration changes
+  ansible.builtin.meta: flush_handlers
+
+# ---------------------------------------------------------------------------
+# Verification
+# ---------------------------------------------------------------------------
+- name: Verify GitLab services status
+  ansible.builtin.command:
+    cmd: gitlab-ctl status
+  changed_when: false
+  failed_when: false
+  register: gitlab_clarity_status
+
+- name: Display GitLab services status
+  ansible.builtin.debug:
+    var: gitlab_clarity_status.stdout_lines
+  when: gitlab_clarity_status.stdout_lines is defined
+
+- name: Wait until GitLab health endpoint is ready
+  ansible.builtin.uri:
+    url: "{{ gitlab_clarity_external_url }}/-/health"
+    status_code: 200
+    validate_certs: false
+  register: gitlab_clarity_health
+  retries: 30
+  delay: 10
+  until: gitlab_clarity_health.status == 200
+
+- name: Confirm GitLab is healthy
+  ansible.builtin.debug:
+    msg: "GitLab CE is healthy and responding at {{ gitlab_clarity_external_url }}"

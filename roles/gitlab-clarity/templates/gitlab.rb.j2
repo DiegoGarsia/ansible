@@ -1,0 +1,39 @@
+# {{ ansible_managed }}
+# GitLab Omnibus configuration for gitlab-clarity (2 vCPU / 4 GB RAM)
+# Managed by Ansible — do not edit manually.
+
+external_url '{{ gitlab_clarity_external_url }}'
+registry_external_url '{{ gitlab_clarity_registry_external_url }}'
+
+# ---------------------------------------------------------------------------
+# Container Registry
+# ---------------------------------------------------------------------------
+gitlab_rails['registry_enabled'] = {{ gitlab_clarity_registry_enabled | bool | lower }}
+
+# ---------------------------------------------------------------------------
+# Let's Encrypt (disabled — HTTP-only lab environment)
+# ---------------------------------------------------------------------------
+letsencrypt['enable'] = {{ gitlab_clarity_letsencrypt_enabled | bool | lower }}
+
+{% if gitlab_clarity_resource_optimization | bool %}
+# ---------------------------------------------------------------------------
+# Resource optimization for 2 vCPU / 4 GB RAM VM
+# ---------------------------------------------------------------------------
+
+# Disable monitoring stack to conserve RAM
+prometheus['enable'] = false
+alertmanager['enable'] = false
+node_exporter['enable'] = false
+redis_exporter['enable'] = false
+postgres_exporter['enable'] = false
+gitlab_exporter['enable'] = false
+
+# Disable GitLab Kubernetes Agent Server (not needed without Kubernetes integration)
+gitlab_kas['enable'] = false
+
+# Puma — 2 workers for 2 vCPU
+puma['worker_processes'] = {{ gitlab_clarity_puma_worker_processes }}
+
+# Sidekiq — limit concurrency for 4 GB RAM
+sidekiq['max_concurrency'] = {{ gitlab_clarity_sidekiq_max_concurrency }}
+{% endif %}

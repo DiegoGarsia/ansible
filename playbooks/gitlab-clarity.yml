@@ -1,0 +1,6 @@
+---
+- name: Configure GitLab Clarity
+  hosts: gitlab_clarity
+  become: true
+  roles:
+    - role: gitlab-clarity

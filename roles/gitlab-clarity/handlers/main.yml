@@ -1,0 +1,15 @@
+---
+# handlers file for roles/gitlab-clarity
+
+- name: Reconfigure GitLab
+  ansible.builtin.command:
+    cmd: gitlab-ctl reconfigure
+  register: gitlab_clarity_reconfigure_result
+  changed_when: >
+    'Starting Chef Client' in gitlab_clarity_reconfigure_result.stdout
+    or 'Running handlers' in gitlab_clarity_reconfigure_result.stdout
+
+- name: Restart GitLab
+  ansible.builtin.command:
+    cmd: gitlab-ctl restart
+  changed_when: true

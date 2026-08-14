@@ -1,0 +1,22 @@
+---
+# tasks/repository.yml — Add official GitLab CE repository for Ubuntu 24.04
+
+- name: Check if GitLab repository is already configured
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/gitlab_gitlab-ce.list
+  register: gitlab_clarity_repo_file
+
+- name: Download GitLab repository installation script
+  ansible.builtin.get_url:
+    url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh
+    dest: "{{ gitlab_clarity_repo_script }}"
+    mode: "0755"
+    force: false
+  when: not gitlab_clarity_repo_file.stat.exists
+
+- name: Execute GitLab repository installation script
+  ansible.builtin.command:
+    cmd: "{{ gitlab_clarity_repo_script }}"
+  args:
+    creates: /etc/apt/sources.list.d/gitlab_gitlab-ce.list
+  when: not gitlab_clarity_repo_file.stat.exists
