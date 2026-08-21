@@ -1,11 +1,18 @@
 # test.yml
+# WARNING: This playbook prints vault passwords to output.
+# Use only for debugging. Remove or protect before production.
 ---
-- hosts: postgres
+- name: Test vault passwords
+  hosts: postgres
   gather_facts: false
 
   tasks:
-    - debug:
+    - name: Debug vault_postgres_superuser_password
+      ansible.builtin.debug:
         var: vault_postgres_superuser_password
+      no_log: true
 
-    - debug:
+    - name: Debug postgres_superuser_password
+      ansible.builtin.debug:
         var: postgres_superuser_password
+      no_log: true

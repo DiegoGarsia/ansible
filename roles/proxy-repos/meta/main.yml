@@ -1,0 +1,40 @@
+galaxy_info:
+  author: "MTS DevOps"
+  description: >
+    Configure APT (Debian/Ubuntu) or YUM/DNF (RedHat/CentOS/Rocky/AlmaLinux)
+    package managers to use MTS proxy repositories.
+  company: "MTS"
+
+  license: MIT
+
+  min_ansible_version: "2.10"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+    - name: Ubuntu
+      versions:
+        - all
+    - name: EL
+      versions:
+        - "7"
+        - "8"
+        - "9"
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+
+  galaxy_tags:
+    - mts
+    - proxy
+    - repository
+    - apt
+    - yum
+    - dnf
+    - package
+    - mirror
+
+dependencies: []

@@ -24,7 +24,7 @@
 
 # Используемые переменные
 
-Все основные параметры определяются в `group_vars/all.yml`.
+Основные параметры DNS-зоны определяются в `roles/bind/vars/main.yml`.
 
 ## Обязательные
 
@@ -36,13 +36,9 @@
 | `dns_reverse_zone` | Обратная зона | `0.168.192.in-addr.arpa` |
 | `dns_forwarders` | Список DNS-forwarder | `192.168.0.1` |
 
-Пример:
+Пример (`roles/bind/vars/main.yml`):
 
 ```yaml
-ansible_user: diego
-ansible_become: true
-ansible_become_method: sudo
-
 dns_domain: diego.home
 
 dns_server: dns
@@ -64,13 +60,9 @@ dns_forwarders:
 bind_packages:
   - bind9
   - bind9-utils
-  - dnsutils
+  - bind9-dnsutils
 
 bind_service: bind9
-
-dns_allowed_networks:
-  - localhost
-  - 192.168.0.0/24
 ```
 
 ---

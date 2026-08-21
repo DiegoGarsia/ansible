@@ -1,5 +1,9 @@
 ---
-- import_tasks: install.yml
-- import_tasks: prepare.yml
-- import_tasks: deploy.yml
-- import_tasks: run.yml
+- name: Import install tasks
+  ansible.builtin.import_tasks: install.yml
+- name: Import prepare tasks
+  ansible.builtin.import_tasks: prepare.yml
+- name: Import deploy tasks
+  ansible.builtin.import_tasks: deploy.yml
+- name: Import run tasks
+  ansible.builtin.import_tasks: run.yml

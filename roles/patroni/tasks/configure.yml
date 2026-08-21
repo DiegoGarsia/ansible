@@ -5,6 +5,7 @@
       - "postgres_superuser_password={{ postgres_superuser_password | default('UNDEF') }}"
       - "replication_password={{ replication_password | default('UNDEF') }}"
       - "vault_postgres_superuser_password={{ vault_postgres_superuser_password | default('UNDEF') }}"
+  no_log: true
 
 - name: Deploy Patroni configuration
   ansible.builtin.template:

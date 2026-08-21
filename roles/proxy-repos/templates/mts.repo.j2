@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+# This file is managed by Ansible — manual changes will be overwritten.
+
+[{{ proxy_repos_yum_repo_id }}]
+name={{ proxy_repos_yum_name }}
+baseurl={{ proxy_repos_yum_base_url }}
+enabled={{ 1 if proxy_repos_yum_enabled else 0 }}
+gpgcheck={{ 1 if proxy_repos_yum_gpgcheck else 0 }}
+{% if proxy_repos_yum_gpgkey %}
+gpgkey={{ proxy_repos_yum_gpgkey }}
+{% endif %}

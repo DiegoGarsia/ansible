@@ -1,14 +1,14 @@
 ---
 - name: Create compose directory
   become: true
-  file:
+  ansible.builtin.file:
     path: "{{ docker_compose_project_dir }}"
     state: directory
     mode: "0755"
 
 - name: Copy application files
   become: true
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "{{ docker_compose_project_dir }}/{{ item }}"
     mode: "0644"

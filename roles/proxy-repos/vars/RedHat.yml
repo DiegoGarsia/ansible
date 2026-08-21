@@ -1,0 +1,4 @@
+---
+# OS-specific variables for RedHat family
+# These override defaults where necessary for RHEL/CentOS/Rocky/AlmaLinux.
+proxy_repos_yum_gpgcheck: false

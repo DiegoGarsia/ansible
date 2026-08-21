@@ -41,6 +41,7 @@
   ansible.builtin.command:
     cmd: ./prepare
     chdir: "{{ harbor_dir }}/harbor"
+  changed_when: false
 
 - name: Configure Harbor syslog to use IPv4
   ansible.builtin.replace:

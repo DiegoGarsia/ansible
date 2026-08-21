@@ -16,10 +16,6 @@
     state: present
     update_cache: true
 
-- name: Configure firewall
-  ansible.builtin.include_tasks: firewall.yml
-  when: gitlab_manage_ufw | bool
-
 - name: Install Docker for GitLab Runner
   ansible.builtin.include_tasks: docker.yml
   when: gitlab_install_docker | bool

@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+# This file is managed by Ansible — manual changes will be overwritten.
+
+{% for suite in proxy_repos_apt_suites %}
+deb [arch={{ proxy_repos_apt_architectures }}] {{ proxy_repos_apt_base_url }} {{ suite }} {{ proxy_repos_apt_components }}
+{% if proxy_repos_apt_include_src %}
+deb-src [arch={{ proxy_repos_apt_architectures }}] {{ proxy_repos_apt_base_url }} {{ suite }} {{ proxy_repos_apt_components }}
+{% endif %}
+{% endfor %}

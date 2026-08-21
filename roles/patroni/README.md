@@ -1,4 +1,4 @@
-# partoni role
+# patroni role
 
 Ansible роль для развёртывания высокодоступного PostgreSQL-кластера с использованием Patroni и etcd.
 

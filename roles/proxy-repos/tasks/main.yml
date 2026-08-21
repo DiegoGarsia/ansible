@@ -1,0 +1,72 @@
+---
+# tasks file for proxy-repos
+
+- name: Gather OS facts
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - "!min"
+      - "distribution"
+      - "os_family"
+  when: ansible_facts is not defined or not ansible_facts.get('os_family')
+
+- name: Include OS-specific variables
+  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_distribution }}.yml"
+        - "{{ ansible_os_family }}.yml"
+        - default.yml
+      paths:
+        - "{{ role_path }}/vars"
+
+# ---------------------------------------------------------------------------
+# Debian / Ubuntu — configure APT repositories
+# ---------------------------------------------------------------------------
+- name: Configure APT repositories (Debian / Ubuntu)
+  when: ansible_os_family == "Debian"
+  block:
+    - name: Remove existing files in /etc/apt/sources.list.d/
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ query('file_glob', '/etc/apt/sources.list.d/*') }}"
+      when: proxy_repos_apt_clean_sources_list_d
+
+    - name: Deploy APT sources.list
+      ansible.builtin.template:
+        src: sources.list.j2
+        dest: "{{ proxy_repos_apt_sources_list_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: update package cache
+
+# ---------------------------------------------------------------------------
+# RedHat / CentOS / Rocky / AlmaLinux — configure YUM/DNF repositories
+# ---------------------------------------------------------------------------
+- name: Configure YUM/DNF repositories (RedHat family)
+  when: ansible_os_family == "RedHat"
+  block:
+    - name: Deploy YUM/DNF .repo file
+      ansible.builtin.template:
+        src: mts.repo.j2
+        dest: "/etc/yum.repos.d/{{ proxy_repos_yum_repo_id }}.repo"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: update package cache
+
+    - name: Disable default distribution repositories
+      ansible.builtin.yum_repository:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - baseos
+        - appstream
+        - extras
+        - base
+        - updates
+        - epel
+      when: proxy_repos_yum_disable_default_repos | default(false)

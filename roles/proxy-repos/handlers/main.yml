@@ -1,0 +1,23 @@
+---
+# handlers file for proxy-repos
+#
+# Both handlers listen on the same "update package cache" event,
+# but each is guarded by an OS family condition so that only the
+# appropriate package manager cache is refreshed on the target host.
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  listen: "update package cache"
+  when:
+    - proxy_repos_update_cache
+    - ansible_facts.os_family == "Debian"
+
+- name: Update YUM/DNF cache
+  ansible.builtin.yum:
+    update_cache: true
+  listen: "update package cache"
+  when:
+    - proxy_repos_update_cache
+    - ansible_facts.os_family == "RedHat"

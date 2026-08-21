@@ -56,40 +56,38 @@ roles/
 
 ## Используемые переменные
 
-### group_vars/all.yml
-
-```yaml
-local_networks:
-  - 192.168.0.0/24
-
-jump_host_sources:
-  - 192.168.0.100/32
-```
-
 ### group_vars/managed.yml
 
 ```yaml
 firewall_default_input_policy: DROP
-firewall_default_forward_policy: DROP
+firewall_default_forward_policy: ACCEPT
 firewall_default_output_policy: ACCEPT
 
-firewall_default_sources: "{{ local_networks }}"
+# Источники по умолчанию (локальная сеть)
+firewall_default_sources:
+  - 192.168.0.0/24
 
 firewall_services:
 
   ssh:
+    enabled: true
     protocol: tcp
     ports:
       - 22
-    sources: "{{ jump_host_sources }}"
+    sources:
+      - 192.168.0.100/32
+
+  icmp:
+    enabled: true
+    protocol: icmp
 
   nginx:
+    enabled: true
     protocol: tcp
     ports:
       - 80
       - 443
-    sources:
-      - 0.0.0.0/0
+      - 8000
 ```
 
 ---

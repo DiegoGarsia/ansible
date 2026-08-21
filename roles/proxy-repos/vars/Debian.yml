@@ -1,0 +1,5 @@
+---
+# OS-specific variables for Debian family
+# These override defaults where necessary for Debian/Ubuntu systems.
+# Debian: only "main" by default (contrib and non-free are opt-in).
+proxy_repos_apt_components: "main"

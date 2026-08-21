@@ -9,3 +9,11 @@
 
 # Personal SSH key
 roles/bootstrap/files/access_key.pub
+
+# SSL/TLS certificates and private keys
+*.crt
+*.key
+!roles/nginx/files/openssl.cnf
+
+# Ansible vault password file
+.vault_pass

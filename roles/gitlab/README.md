@@ -21,10 +21,10 @@ ansible-galaxy collection install -r role/gitlab/requirements.yml
 Первый запуск выполняйте без токена Runner и без API-переменных: роль установит GitLab и сообщит, что регистрация пропущена. После первого входа в GitLab создайте project runner: **Settings → CI/CD → Runners → New project runner**. Выберите тег `docker`, затем сохраните выданный authentication token `glrt-...` в Ansible Vault.
 
 ```bash
-ansible-vault create group_vars/gitlab/vault.yml
+ansible-vault edit inventory/group_vars/vault.yml
 ```
 
-Содержимое Vault:
+Добавьте в vault.yml:
 
 ```yaml
 vault_gitlab_runner_token: "glrt-ЗАМЕНИТЕ_НА_ВАШ_ТОКЕН"

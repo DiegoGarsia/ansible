@@ -1,5 +1,9 @@
 ---
-- import_tasks: cleanup.yml
-- import_tasks: install.yml
-- import_tasks: build.yml
-- import_tasks: run.yml
+- name: Import cleanup tasks
+  ansible.builtin.import_tasks: cleanup.yml
+- name: Import install tasks
+  ansible.builtin.import_tasks: install.yml
+- name: Import build tasks
+  ansible.builtin.import_tasks: build.yml
+- name: Import run tasks
+  ansible.builtin.import_tasks: run.yml

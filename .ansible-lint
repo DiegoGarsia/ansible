@@ -1,0 +1,7 @@
+---
+# ansible-lint configuration
+# role-name rule is skipped because "proxy-repos" (hyphen) is a valid
+# Ansible Galaxy role name, while ansible-lint's role-name rule
+# enforces the stricter underscore-only pattern.
+skip_list:
+  - role-name

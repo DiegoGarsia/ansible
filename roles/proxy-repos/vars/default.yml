@@ -1,0 +1,4 @@
+---
+# Fallback OS-specific variables (when no specific OS file is found)
+# This file is included if neither {{ ansible_distribution }}.yml
+# nor {{ ansible_os_family }}.yml exists in vars/.

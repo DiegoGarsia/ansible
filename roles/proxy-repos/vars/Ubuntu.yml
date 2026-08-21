@@ -1,0 +1,5 @@
+---
+# OS-specific variables for Ubuntu
+# These override defaults where necessary for Ubuntu systems.
+# Ubuntu: standard archive components (main is always enabled).
+proxy_repos_apt_components: "main restricted universe multiverse"

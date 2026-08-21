@@ -74,7 +74,8 @@ harbor_hostname: "192.168.0.102"
 harbor_port: 8081
 
 harbor_username: admin
-harbor_admin_password: "Harbor12345"
+# Пароль администратора Harbor. Храните в Ansible Vault.
+harbor_admin_password: "{{ vault_harbor_admin_password }}"
 
 source_image: nginx:latest
 

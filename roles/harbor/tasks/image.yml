@@ -26,6 +26,7 @@
       docker tag
       {{ source_image }}
       {{ harbor_full_image }}:{{ image_tag }}
+  changed_when: false
 
 - name: Push image to Harbor
   community.docker.docker_image:

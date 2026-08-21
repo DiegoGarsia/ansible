@@ -167,7 +167,7 @@ backup_retention: 7
 Основные переменные находятся в:
 ```
 roles/backup/defaults/main.yml
-````
+```
 
 Пример:
 
@@ -178,8 +178,9 @@ backup_directory: /var/backups/pg
 
 backup_retention: 7
 
-backup_schedule: "*-*-* 03:00:00"
-````
+backup_hour: 3
+backup_minute: 0
+```
 
 ---
 

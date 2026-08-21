@@ -41,4 +41,3 @@ patroni_pg_hba:
   - host replication {{ replication_user }} 192.168.0.152/32 md5
   - host replication {{ replication_user }} 192.168.0.153/32 md5
   - host all all 0.0.0.0/0 md5
-

@@ -9,14 +9,14 @@
         name: firewalld
         state: stopped
         enabled: false
-      ignore_errors: true
+      failed_when: false
 
     - name: Stop and disable ufw
       ansible.builtin.systemd:
         name: ufw
         state: stopped
         enabled: false
-      ignore_errors: true
+      failed_when: false
 
     - name: Disable UFW (if installed)
       ansible.builtin.command: ufw disable
@@ -29,4 +29,4 @@
         name: nftables
         state: stopped
         enabled: false
-      ignore_errors: true
+      failed_when: false

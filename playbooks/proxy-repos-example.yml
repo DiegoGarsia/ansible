@@ -1,0 +1,39 @@
+---
+# =============================================================================
+# Example playbook: Configure MTS proxy repositories
+# =============================================================================
+# Usage:
+#   ansible-playbook -i inventory playbooks/proxy-repos-example.yml
+#
+# Override variables via --extra-vars or group_vars:
+#   ansible-playbook -i inventory playbooks/proxy-repos-example.yml \
+#     -e proxy_repos_apt_base_url=http://my-proxy/apt
+# =============================================================================
+
+- name: "Configure APT proxy repositories on Debian / Ubuntu"
+  hosts: debian_hosts
+  become: true
+  vars:
+    # --- Override these for your infrastructure ---
+    proxy_repos_apt_base_url: "http://mts-apt-proxy.internal.mts.ru/{{ ansible_distribution | lower }}"
+    proxy_repos_apt_distribution: "{{ ansible_distribution_release }}"
+    proxy_repos_apt_components: "main restricted universe multiverse"
+    proxy_repos_apt_include_src: false
+    proxy_repos_apt_clean_sources_list_d: true
+    # ----------------------------------------------
+  roles:
+    - role: proxy-repos
+
+- name: "Configure YUM/DNF proxy repositories on RedHat / CentOS / Rocky / AlmaLinux"
+  hosts: rhel_hosts
+  become: true
+  vars:
+    # --- Override these for your infrastructure ---
+    proxy_repos_yum_base_url: "http://mts-yum-proxy.internal.mts.ru/{{ ansible_distribution | lower }}/$releasever/$basearch/"
+    proxy_repos_yum_repo_id: "mts-proxy"
+    proxy_repos_yum_name: "MTS Proxy Repository"
+    proxy_repos_yum_gpgcheck: false
+    proxy_repos_yum_enabled: true
+    # ----------------------------------------------
+  roles:
+    - role: proxy-repos

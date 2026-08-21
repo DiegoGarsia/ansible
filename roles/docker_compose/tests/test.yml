@@ -1,5 +1,6 @@
 ---
-- hosts: docker_hosts
+- name: Test docker_compose role
+  hosts: docker_hosts
   become: true
   roles:
     - docker_compose
