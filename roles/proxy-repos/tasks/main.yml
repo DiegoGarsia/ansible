@@ -1,6 +1,14 @@
 ---
-# tasks file for proxy-repos
+# =============================================================================
+# proxy-repos — задачи
+# =============================================================================
+# Безопасная замена зеркала: роль заменяет настроенный URL "откуда" на URL
+# "куда" внутри существующих файлов источников. Она не удаляет файлы, не
+# перезаписывает конфигурации целиком и не отключает репозитории.
+# Всё остальное содержимое файлов сохраняется.
+# =============================================================================
 
+# Сбор фактов об ОС (семейство, дистрибутив, версия).
 - name: Gather OS facts
   ansible.builtin.setup:
     gather_subset:
@@ -10,6 +18,7 @@
       - "os_family"
   when: ansible_facts is not defined or not ansible_facts.get('os_family')
 
+# Подключение OS-специфичных переменных (списки файлов для обработки).
 - name: Include OS-specific variables
   ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
   vars:
@@ -22,51 +31,49 @@
         - "{{ role_path }}/vars"
 
 # ---------------------------------------------------------------------------
-# Debian / Ubuntu — configure APT repositories
+# Debian / Ubuntu — замена URL APT-репозитория
 # ---------------------------------------------------------------------------
-- name: Configure APT repositories (Debian / Ubuntu)
+- name: Replace APT repository URL (Debian / Ubuntu)
   when: ansible_os_family == "Debian"
   block:
-    - name: Remove existing files in /etc/apt/sources.list.d/
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: absent
-      loop: "{{ query('file_glob', '/etc/apt/sources.list.d/*') }}"
-      when: proxy_repos_apt_clean_sources_list_d
+    # Проверка, какие файлы источников APT существуют.
+    - name: Check which APT source files exist
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+      loop: "{{ proxy_repos_apt_mirror_files }}"
+      register: _apt_mirror_files_stat
 
-    - name: Deploy APT sources.list
-      ansible.builtin.template:
-        src: sources.list.j2
-        dest: "{{ proxy_repos_apt_sources_list_path }}"
-        owner: root
-        group: root
-        mode: "0644"
+    # Точечная замена официального URL на зеркало.
+    - name: Replace official repository URL with mirror
+      ansible.builtin.replace:
+        path: "{{ item.item.path }}"
+        regexp: "{{ proxy_repos_apt_mirror_from | regex_escape }}"
+        replace: "{{ proxy_repos_apt_mirror_to }}"
+        backup: "{{ item.item.backup | default(proxy_repos_apt_mirror_backup) }}"
+      loop: "{{ _apt_mirror_files_stat.results }}"
+      when: item.stat.exists
       notify: update package cache
 
 # ---------------------------------------------------------------------------
-# RedHat / CentOS / Rocky / AlmaLinux — configure YUM/DNF repositories
+# RedHat / CentOS / Rocky / AlmaLinux — замена URL YUM/DNF-репозитория
 # ---------------------------------------------------------------------------
-- name: Configure YUM/DNF repositories (RedHat family)
+- name: Replace YUM/DNF repository URL (RedHat family)
   when: ansible_os_family == "RedHat"
   block:
-    - name: Deploy YUM/DNF .repo file
-      ansible.builtin.template:
-        src: mts.repo.j2
-        dest: "/etc/yum.repos.d/{{ proxy_repos_yum_repo_id }}.repo"
-        owner: root
-        group: root
-        mode: "0644"
-      notify: update package cache
+    # Проверка, какие файлы репозиториев YUM/DNF существуют.
+    - name: Check which YUM/DNF repo files exist
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+      loop: "{{ proxy_repos_yum_mirror_files }}"
+      register: _yum_mirror_files_stat
 
-    - name: Disable default distribution repositories
-      ansible.builtin.yum_repository:
-        name: "{{ item }}"
-        state: absent
-      loop:
-        - baseos
-        - appstream
-        - extras
-        - base
-        - updates
-        - epel
-      when: proxy_repos_yum_disable_default_repos | default(false)
+    # Точечная замена официального URL на зеркало.
+    - name: Replace official repository URL with mirror
+      ansible.builtin.replace:
+        path: "{{ item.item.path }}"
+        regexp: "{{ proxy_repos_yum_mirror_from | regex_escape }}"
+        replace: "{{ proxy_repos_yum_mirror_to }}"
+        backup: "{{ item.item.backup | default(proxy_repos_yum_mirror_backup) }}"
+      loop: "{{ _yum_mirror_files_stat.results }}"
+      when: item.stat.exists
+      notify: update package cache

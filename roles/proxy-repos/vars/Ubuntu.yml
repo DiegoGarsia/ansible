@@ -1,5 +1,15 @@
 ---
-# OS-specific variables for Ubuntu
-# These override defaults where necessary for Ubuntu systems.
-# Ubuntu: standard archive components (main is always enabled).
-proxy_repos_apt_components: "main restricted universe multiverse"
+# =============================================================================
+# proxy-repos — переменные для Ubuntu
+# =============================================================================
+# Файлы источников APT, в которых выполняется замена URL на зеркало.
+# Ubuntu 22.04+ в некоторых сценариях использует deb822-файл
+# /etc/apt/sources.list.d/ubuntu.sources, но по умолчанию применяется
+# классический /etc/apt/sources.list. Оба файла перечислены ниже; задачи
+# проверяют каждый через stat и обрабатывают только существующие.
+# =============================================================================
+proxy_repos_apt_mirror_files:
+  - path: "/etc/apt/sources.list"
+    backup: true
+  - path: "/etc/apt/sources.list.d/ubuntu.sources"
+    backup: true

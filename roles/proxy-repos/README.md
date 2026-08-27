@@ -1,6 +1,17 @@
 # proxy-repos
 
-Ansible-роль для замены конфигураций пакетных менеджеров APT (Debian/Ubuntu) и YUM/DNF (RedHat/CentOS/Rocky/AlmaLinux) на прокси-репозитории МТС.
+Ansible-роль для **безопасной замены URL** репозиториев пакетных менеджеров APT (Debian/Ubuntu) и YUM/DNF (RedHat/CentOS/Rocky/AlmaLinux) на зеркало.
+
+## Принцип безопасности
+
+Роль выполняет **только точечную замену** одного URL на другой внутри существующих файлов источников. Она:
+
+- ✅ **не удаляет** файлы (в т.ч. в `/etc/apt/sources.list.d/`);
+- ✅ **не перезаписывает** конфигурационные файлы целиком;
+- ✅ **не отключает** репозитории;
+- ✅ **не выполняет** `apt upgrade` / `yum upgrade` (никакие пакеты не устанавливаются и не обновляются);
+- ✅ сохраняет всё остальное содержимое файлов;
+- ✅ создаёт резервную копию файла перед изменением (если включено).
 
 ## Требования
 
@@ -9,38 +20,59 @@ Ansible-роль для замены конфигураций пакетных �
   - **Debian** (Debian 11+ / Ubuntu 20.04+)
   - **RedHat** (CentOS 7+ / Rocky Linux 8+ / AlmaLinux 8+)
 
+## Как использовать
+
+URL зеркала задаётся **переменной** — достаточно изменить `proxy_repos_apt_mirror_to` (или `proxy_repos_yum_mirror_to`) при запуске роли. Значение можно передать через playbook, `group_vars`, `host_vars` или `--extra-vars`.
+
+```bash
+# Пример: замена на зеркало Яндекс через --extra-vars
+ansible-playbook -i inventory playbooks/proxy-repos.yml \
+  -e proxy_repos_apt_mirror_to=https://mirror.yandex.ru/ubuntu/
+```
+
+### Запуск на конкретной группе хостов
+
+```bash
+# Только на группе ubuntu_hosts
+ansible-playbook -i inventory playbooks/proxy-repos.yml --limit ubuntu_hosts
+```
+
+## Структура роли
+
+| Файл | Ответственность |
+|---|---|
+| [`defaults/main.yml`](defaults/main.yml) | Все переменные по умолчанию |
+| [`tasks/main.yml`](tasks/main.yml) | Логика: сбор фактов, подключение OS-переменных, точечная замена URL |
+| [`vars/Ubuntu.yml`](vars/Ubuntu.yml) | Список файлов APT для Ubuntu |
+| [`vars/Debian.yml`](vars/Debian.yml) | Список файлов APT для Debian |
+| [`vars/RedHat.yml`](vars/RedHat.yml) | Список файлов YUM/DNF для RedHat |
+| [`vars/default.yml`](vars/default.yml) | Запасные значения для неизвестных ОС |
+| [`handlers/main.yml`](handlers/main.yml) | Обновление кэша пакетов |
+| [`meta/main.yml`](meta/main.yml) | Метаданные роли |
+
 ## Переменные роли
 
-Все переменные определены в [`defaults/main.yml`](defaults/main.yml) и могут быть переопределены в playbook, group_vars или host_vars. OS-специфичные значения по умолчанию находятся в [`vars/`](vars/) (`Debian.yml`, `Ubuntu.yml`, `RedHat.yml`).
+Все переменные определены в [`defaults/main.yml`](defaults/main.yml) и могут быть переопределены в playbook, group_vars или host_vars. OS-специфичные списки файлов находятся в [`vars/`](vars/) (`Debian.yml`, `Ubuntu.yml`, `RedHat.yml`).
 
 ### APT (Debian / Ubuntu)
 
 | Переменная | Описание | Значение по умолчанию |
 |---|---|---|
-| `proxy_repos_apt_base_url` | Базовый URL прокси-репозитория APT | `http://mts-apt-proxy.example.com/{{ ansible_distribution \| lower }}` |
-| `proxy_repos_apt_distribution` | Кодовое имя дистрибутива (автоопределение) | `{{ ansible_distribution_release }}` |
-| `proxy_repos_apt_suites` | Suites APT для генерации (добавьте `-updates`, `-security`, `-backports`, если они есть в прокси) | `["{{ proxy_repos_apt_distribution }}"]` |
-| `proxy_repos_apt_components` | Компоненты репозитория | `main restricted universe multiverse` |
-| `proxy_repos_apt_architectures` | Архитектуры для включения | `amd64` |
-| `proxy_repos_apt_include_src` | Включать строки deb-src | `true` |
-| `proxy_repos_apt_clean_sources_list_d` | Удалить все файлы в `/etc/apt/sources.list.d/` (**деструктивно**, см. предупреждение) | `false` |
-| `proxy_repos_apt_sources_list_path` | Путь к основному файлу sources.list | `/etc/apt/sources.list` |
+| `proxy_repos_apt_mirror_from` | Официальный URL, который заменяется | `http://archive.ubuntu.com/ubuntu` |
+| `proxy_repos_apt_mirror_to` | Зеркало, на которое заменяется (передаётся как переменная) | `https://mirror.yandex.ru/ubuntu/` |
+| `proxy_repos_apt_mirror_backup` | Создавать бэкап файла перед изменением | `true` |
+| `proxy_repos_apt_mirror_files` | Список файлов для обработки (автоопределяется по ОС в `vars/`, можно переопределить) | `[]` |
 
-> **Предупреждение:** `proxy_repos_apt_clean_sources_list_d: true` удаляет **любые** файлы в `/etc/apt/sources.list.d/` (включая созданные другими ролями или вручную). Включайте только если прокси-репозиторий является единственным источником APT.
+> **OS-aware поведение:** роль сначала определяет дистрибутив/версию (`ansible_os_family`, `ansible_distribution`), затем выбирает целевые файлы из `proxy_repos_apt_mirror_files` (в `vars/Ubuntu.yml` и `vars/Debian.yml`). Каждый файл проверяется через `stat` — обрабатываются только существующие. Например, на Ubuntu 22.04+ в некоторых сценариях используется deb822-файл `/etc/apt/sources.list.d/ubuntu.sources`, а по умолчанию — классический `/etc/apt/sources.list`.
 
 ### YUM / DNF (RedHat family)
 
 | Переменная | Описание | Значение по умолчанию |
 |---|---|---|
-| `proxy_repos_yum_base_url` | Базовый URL прокси-репозитория YUM | `http://mts-yum-proxy.example.com/{{ ansible_distribution \| lower }}/$releasever/$basearch/` |
-| `proxy_repos_yum_gpgcheck` | Включить проверку GPG-подписи | `false` |
-| `proxy_repos_yum_gpgkey` | URL GPG-ключа (опционально) | `""` |
-| `proxy_repos_yum_enabled` | Репозиторий включён по умолчанию | `true` |
-| `proxy_repos_yum_name` | Человекочитаемое имя репозитория | `MTS Proxy Repository` |
-| `proxy_repos_yum_repo_id` | ID репозитория (секция в .repo / имя файла) | `mts-proxy` |
-| `proxy_repos_yum_disable_default_repos` | Удалить стандартные репозитории (`baseos`, `appstream`, `base`, `updates`, `epel`) (**деструктивно**, см. предупреждение) | `false` |
-
-> **Предупреждение:** `proxy_repos_yum_disable_default_repos: true` удаляет репозитории **по имени** и может не покрывать все дистрибутив-специфичные репозитории. Включайте только если прокси-репозиторий заменяет все стандартные репозитории.
+| `proxy_repos_yum_mirror_from` | Официальный URL, который заменяется | `http://mirror.centos.org/centos` |
+| `proxy_repos_yum_mirror_to` | Зеркало, на которое заменяется (передаётся как переменная) | `http://mirror.yandex.ru/centos/` |
+| `proxy_repos_yum_mirror_backup` | Создавать бэкап файла перед изменением | `true` |
+| `proxy_repos_yum_mirror_files` | Список файлов для обработки (автоопределяется по ОС в `vars/`, можно переопределить) | `[]` |
 
 ### Глобальные
 
@@ -48,37 +80,45 @@ Ansible-роль для замены конфигураций пакетных �
 |---|---|---|
 | `proxy_repos_update_cache` | Запускать `apt-get update` / `yum makecache` после изменений | `true` |
 
-## Зависимости
-
-Нет.
+> `apt-get update` / `yum makecache` лишь обновляют индексы доступных пакетов и **не устанавливают и не обновляют** пакеты. При необходимости отключите через `proxy_repos_update_cache: false`.
 
 ## Пример playbook
 
 ```yaml
 ---
-- name: Настройка прокси-репозиториев APT на Debian/Ubuntu
-  hosts: debian_hosts
+- name: Замена официального репозитория Ubuntu на зеркало
+  hosts: ubuntu_hosts
   become: true
   vars:
-    proxy_repos_apt_base_url: "http://mts-apt-proxy.internal.mts.ru/ubuntu"
-    proxy_repos_apt_distribution: "jammy"
-    proxy_repos_apt_suites:
-      - "jammy"
-      - "jammy-updates"
-      - "jammy-security"
-    proxy_repos_apt_components: "main universe"
+    proxy_repos_apt_mirror_to: "https://mirror.yandex.ru/ubuntu/"
   roles:
     - role: proxy-repos
 
-- name: Настройка прокси-репозиториев YUM/DNF на RedHat-системах
+- name: Замена официального репозитория CentOS на зеркало
   hosts: rhel_hosts
   become: true
   vars:
-    proxy_repos_yum_base_url: "http://mts-yum-proxy.internal.mts.ru/rocky/$releasever/$basearch/"
-    proxy_repos_yum_repo_id: "mts-proxy"
-    proxy_repos_yum_name: "MTS Rocky Linux BaseOS"
+    proxy_repos_yum_mirror_to: "http://mirror.yandex.ru/centos/"
   roles:
     - role: proxy-repos
+```
+
+## Пример результата
+
+До применения (Ubuntu 24.04, `/etc/apt/sources.list`):
+
+```
+deb http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu noble-security main restricted universe multiverse
+```
+
+После применения:
+
+```
+deb https://mirror.yandex.ru/ubuntu/ noble main restricted universe multiverse
+deb https://mirror.yandex.ru/ubuntu/ noble-updates main restricted universe multiverse
+deb https://mirror.yandex.ru/ubuntu/ noble-security main restricted universe multiverse
 ```
 
 ## Лицензия

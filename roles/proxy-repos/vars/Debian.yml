@@ -1,5 +1,10 @@
 ---
-# OS-specific variables for Debian family
-# These override defaults where necessary for Debian/Ubuntu systems.
-# Debian: only "main" by default (contrib and non-free are opt-in).
-proxy_repos_apt_components: "main"
+# =============================================================================
+# proxy-repos — переменные для Debian
+# =============================================================================
+# Файлы источников APT, в которых выполняется замена URL на зеркало.
+# Debian по умолчанию использует классический /etc/apt/sources.list.
+# =============================================================================
+proxy_repos_apt_mirror_files:
+  - path: "/etc/apt/sources.list"
+    backup: true

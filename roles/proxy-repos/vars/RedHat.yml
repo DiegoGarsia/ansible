@@ -1,4 +1,14 @@
 ---
-# OS-specific variables for RedHat family
-# These override defaults where necessary for RHEL/CentOS/Rocky/AlmaLinux.
-proxy_repos_yum_gpgcheck: false
+# =============================================================================
+# proxy-repos — переменные для семейства RedHat
+# =============================================================================
+# Файлы репозиториев YUM/DNF, в которых выполняется замена URL на зеркало.
+# Стандартные .repo-файлы находятся в /etc/yum.repos.d/.
+# =============================================================================
+proxy_repos_yum_mirror_files:
+  - path: "/etc/yum.repos.d/CentOS-Base.repo"
+    backup: true
+  - path: "/etc/yum.repos.d/rocky.repo"
+    backup: true
+  - path: "/etc/yum.repos.d/almalinux.repo"
+    backup: true

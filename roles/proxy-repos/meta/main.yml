@@ -1,8 +1,12 @@
+---
+# =============================================================================
+# proxy-repos — метаданные роли
+# =============================================================================
 galaxy_info:
   author: "MTS DevOps"
   description: >
-    Configure APT (Debian/Ubuntu) or YUM/DNF (RedHat/CentOS/Rocky/AlmaLinux)
-    package managers to use MTS proxy repositories.
+    Безопасная замена URL репозиториев APT (Debian/Ubuntu) и
+    YUM/DNF (RedHat/CentOS/Rocky/AlmaLinux) на зеркало.
   company: "MTS"
 
   license: MIT
@@ -22,10 +26,6 @@ galaxy_info:
         - "7"
         - "8"
         - "9"
-    - name: EL
-      versions:
-        - "8"
-        - "9"
 
   galaxy_tags:
     - mts
@@ -37,4 +37,5 @@ galaxy_info:
     - package
     - mirror
 
+# Зависимости отсутствуют.
 dependencies: []

@@ -1,0 +1,34 @@
+---
+# =============================================================================
+# Playbook: замена официальных репозиториев на зеркала (безопасно)
+# =============================================================================
+# Использование:
+#   ansible-playbook -i inventory playbooks/proxy-repos.yml
+#
+# Роль выполняет только точечную замену URL внутри существующих файлов
+# источников. Она не удаляет файлы, не перезаписывает конфигурации целиком
+# и не отключает репозитории.
+#
+# URL зеркала задаётся переменной (не хардкодится здесь). Передайте его
+# через --extra-vars или group_vars/host_vars:
+#   ansible-playbook -i inventory playbooks/proxy-repos.yml \
+#     -e proxy_repos_apt_mirror_to=https://mirror.yandex.ru/ubuntu/
+# =============================================================================
+
+- name: "Replace official Ubuntu repository with a mirror"
+  hosts: ubuntu_hosts
+  become: true
+  roles:
+    - role: proxy-repos
+
+- name: "Replace official Debian repository with a mirror"
+  hosts: debian_hosts
+  become: true
+  roles:
+    - role: proxy-repos
+
+- name: "Replace official CentOS/Rocky/AlmaLinux repository with a mirror"
+  hosts: rhel_hosts
+  become: true
+  roles:
+    - role: proxy-repos

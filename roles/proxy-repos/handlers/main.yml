@@ -1,10 +1,13 @@
 ---
-# handlers file for proxy-repos
-#
-# Both handlers listen on the same "update package cache" event,
-# but each is guarded by an OS family condition so that only the
-# appropriate package manager cache is refreshed on the target host.
+# =============================================================================
+# proxy-repos — обработчики
+# =============================================================================
+# Оба обработчика слушают одно и то же событие "update package cache",
+# но каждый ограничен условием по семейству ОС, чтобы на целевом хосте
+# обновлялся кэш только соответствующего менеджера пакетов.
+# =============================================================================
 
+# Обновление кэша APT (Debian / Ubuntu).
 - name: Update APT cache
   ansible.builtin.apt:
     update_cache: true
@@ -14,6 +17,7 @@
     - proxy_repos_update_cache
     - ansible_facts.os_family == "Debian"
 
+# Обновление кэша YUM/DNF (семейство RedHat).
 - name: Update YUM/DNF cache
   ansible.builtin.yum:
     update_cache: true

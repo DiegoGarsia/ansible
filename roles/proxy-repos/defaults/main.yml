@@ -1,86 +1,58 @@
 ---
 # =============================================================================
-# proxy-repos — default variables
+# proxy-repos — переменные по умолчанию
 # =============================================================================
-# All variables can be overridden in playbook, group_vars, host_vars, etc.
+# Этот файл содержит значения по умолчанию для всех переменных роли.
+# Их можно переопределить в playbook, group_vars, host_vars или через
+# --extra-vars. Приоритет: host_vars > group_vars > playbook > defaults.
+#
+# Роль выполняет ТОЛЬКО безопасную точечную замену URL репозитория на зеркало.
+# Она не удаляет файлы, не перезаписывает конфигурации целиком и не
+# отключает репозитории.
 # =============================================================================
 
 # ---------------------------------------------------------------------------
-# APT (Debian / Ubuntu) proxy repository settings
+# APT (Debian / Ubuntu) — замена зеркала
 # ---------------------------------------------------------------------------
 
-# Base URL of the MTS proxy APT repository.
-# Replace with the actual URL from your infrastructure.
-proxy_repos_apt_base_url: >-
-  http://mts-apt-proxy.example.com/{{ ansible_distribution | lower }}
+# Официальный URL репозитория, который будет заменён (значение "откуда").
+proxy_repos_apt_mirror_from: "http://archive.ubuntu.com/ubuntu"
 
-# Distribution codename (e.g., focal, jammy, bullseye, bookworm).
-# Auto-detected from Ansible facts, override if needed.
-proxy_repos_apt_distribution: "{{ ansible_distribution_release }}"
+# URL зеркала, на которое будет заменён официальный репозиторий (значение "куда").
+# Эту переменную достаточно изменить при запуске роли.
+proxy_repos_apt_mirror_to: "https://mirror.yandex.ru/ubuntu/"
 
-# APT suites to configure (one deb/deb-src line per suite).
-# Default is just the base codename. Add "-updates", "-security",
-# "-backports" suites here if the proxy repo mirrors them, e.g.:
-#   proxy_repos_apt_suites:
-#     - "{{ ansible_distribution_release }}"
-#     - "{{ ansible_distribution_release }}-updates"
-#     - "{{ ansible_distribution_release }}-security"
-proxy_repos_apt_suites:
-  - "{{ proxy_repos_apt_distribution }}"
+# Создавать ли резервную копию файла перед изменением.
+proxy_repos_apt_mirror_backup: true
 
-# Repository components (space-separated).
-proxy_repos_apt_components: "main restricted universe multiverse"
-
-# Architectures to include in the sources.list line.
-proxy_repos_apt_architectures: "amd64"
-
-# Whether to include deb-src lines.
-proxy_repos_apt_include_src: true
-
-# If true, remove all existing files in /etc/apt/sources.list.d/
-# before deploying the new configuration.
-# WARNING: This will delete ANY file in that directory, including
-# files created by other roles or manually. Set to true only if
-# you are certain the proxy repo is the sole apt source.
-proxy_repos_apt_clean_sources_list_d: false
-
-# Path to the main APT sources.list file.
-proxy_repos_apt_sources_list_path: "/etc/apt/sources.list"
+# Список файлов для обработки (APT).
+# Автоопределяется по ОС в vars/, но может быть переопределён.
+# Каждый элемент — словарь: { path: <файл>, backup: <bool> }
+proxy_repos_apt_mirror_files: []
 
 # ---------------------------------------------------------------------------
-# YUM / DNF (RedHat / CentOS / Rocky / AlmaLinux) proxy repository settings
+# YUM / DNF (RedHat / CentOS / Rocky / AlmaLinux) — замена зеркала
 # ---------------------------------------------------------------------------
 
-# Base URL of the MTS proxy YUM repository.
-# Replace with the actual URL from your infrastructure.
-# Use a single-line string — YAML folding (>-) would introduce a space.
-proxy_repos_yum_base_url: "http://mts-yum-proxy.example.com/{{ ansible_distribution | lower }}/$releasever/$basearch/"
+# Официальный URL репозитория, который будет заменён (значение "откуда").
+proxy_repos_yum_mirror_from: "http://mirror.centos.org/centos"
 
-# Whether to enable GPG signature checking.
-proxy_repos_yum_gpgcheck: false
+# URL зеркала, на которое будет заменён официальный репозиторий (значение "куда").
+# Эту переменную достаточно изменить при запуске роли.
+proxy_repos_yum_mirror_to: "http://mirror.yandex.ru/centos/"
 
-# GPG key URL (optional — only used when gpgcheck is true).
-proxy_repos_yum_gpgkey: ""
+# Создавать ли резервную копию файла перед изменением.
+proxy_repos_yum_mirror_backup: true
 
-# Whether the repository should be enabled by default.
-proxy_repos_yum_enabled: true
-
-# Human-readable repository name (used in .repo file).
-proxy_repos_yum_name: "MTS Proxy Repository"
-
-# Repository ID (used in .repo file section header).
-proxy_repos_yum_repo_id: "mts-proxy"
-
-# If true, remove default distribution repositories (baseos, appstream, etc.)
-# from /etc/yum.repos.d/ when deploying the proxy repo.
-# WARNING: This deletes repositories by name and may not cover all
-# distribution-specific defaults. Set to true only if the proxy repo
-# replaces all standard repositories.
-proxy_repos_yum_disable_default_repos: false
+# Список файлов для обработки (YUM/DNF).
+# Автоопределяется по ОС в vars/, но может быть переопределён.
+# Каждый элемент — словарь: { path: <файл>, backup: <bool> }
+proxy_repos_yum_mirror_files: []
 
 # ---------------------------------------------------------------------------
-# Global settings
+# Глобальные настройки
 # ---------------------------------------------------------------------------
 
-# Run apt-get update / yum makecache after changing repository configuration.
+# Запускать apt-get update / yum makecache после изменения конфигурации.
+# Обновляет только индексы пакетов, не устанавливая и не обновляя пакеты.
 proxy_repos_update_cache: true
